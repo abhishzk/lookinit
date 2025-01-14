@@ -10,9 +10,9 @@ import { Header } from '@/components/header';
 import { Providers } from '@/components/providers';
 
 const meta = {
-  title: 'answers, how they should be displayed.',
+  title: 'Results, simple and smart.',
   description:
-    'anwser engine built by developers digest',
+    'AI Search Engine',
 };
 export const metadata: Metadata = {
   ...meta,
