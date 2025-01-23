@@ -45,7 +45,7 @@ const ShoppingComponent: React.FC<ShoppingComponentProps> = ({ shopping }) => {
 
     // 7. Render the 'ShoppingComponent'
     return (
-        <div className="bg-white dark:bg-gray-800 shadow-lg rounded-lg p-4 mt-4">
+        <div className="bg-white dark:bg-[#282a2c] shadow-lg rounded-lg p-4 mt-4">
             <div className="flex items-center">
                 <h2 className="text-lg font-semibold flex-grow text-gray-900 dark:text-gray-100">Shopping Results</h2>
                 <IconPlus className="w-4 h-4 cursor-pointer text-gray-500 dark:text-gray-400" onClick={() => setShowModal(true)} />
@@ -77,8 +77,8 @@ const ShoppingComponent: React.FC<ShoppingComponentProps> = ({ shopping }) => {
             {showModal && (
                 <div className="fixed inset-0 flex items-center justify-center z-50">
                     <div className="fixed inset-0 bg-black opacity-10 transition-opacity" onClick={() => setShowModal(false)}></div>
-                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-3xl w-full mx-auto overflow-hidden relative">
-                        <div className="sticky top-0 bg-white dark:bg-gray-800 px-6 py-4 flex items-center justify-between border-b border-gray-200 dark:border-gray-700">
+                    <div className="bg-white dark:bg-[#282a2c] rounded-lg shadow-xl max-w-3xl w-full mx-auto overflow-hidden relative">
+                        <div className="sticky top-0 bg-white dark:bg-[#282a2c] px-6 py-4 flex items-center justify-between border-b border-gray-200 dark:border-gray-700">
                             <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Shopping Results</h2>
                             <IconClose className="w-6 h-6 cursor-pointer text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition duration-150 ease-in-out" onClick={() => setShowModal(false)} />
                         </div>

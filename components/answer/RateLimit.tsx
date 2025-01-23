@@ -16,7 +16,7 @@ const RateLimit = () => {
             className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50 modal-overlay rate-limit-modal"
             onClick={handleClickOutside}
         >
-            <div className="dark:bg-slate-800 bg-white shadow-lg rounded-lg p-6 max-w-md mx-auto">
+            <div className="dark:bg-[#282a2c] bg-white shadow-lg rounded-lg p-6 max-w-md mx-auto">
                 <div className="flex items-center justify-between mb-4">
                     <h2 className="text-xl font-semibold dark:text-white text-black">
                         Rate Limit Reached

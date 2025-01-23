@@ -19,7 +19,7 @@ const InitialQueries = ({ questions, handleFollowUpClick }: InitialQueriesProps)
         {questions.map((question, index) => (
           <li
             key={index}
-            className="flex items-center cursor-pointer dark:bg-slate-800 bg-white shadow-lg rounded-lg p-4 my-2"
+            className="flex items-center cursor-pointer dark:bg-[#282a2c] bg-white shadow-lg rounded-lg p-4 my-2"
             onClick={() => handleQuestionClick(question)}
           >
             <span role="img" aria-label="link" className="mr-2 dark:text-white text-black">

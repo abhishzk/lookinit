@@ -42,7 +42,7 @@ const StreamingComponent = ({ currentLlmResponse }: { currentLlmResponse: string
     return (
         <>
             {currentLlmResponse && (
-                <div className="dark:bg-slate-800 bg-white shadow-lg rounded-lg p-4 mt-4">
+                <div className="dark:bg-[#282a2c] bg-white shadow-lg rounded-lg p-4 mt-4">
                     <div className="flex items-center">
                         <h2 className="text-lg font-semibold flex-grow dark:text-white text-black">Answer</h2>
                         <img src="./groq.png" alt="groq logo" className='w-6 h-6' />
@@ -65,7 +65,7 @@ interface LLMResponseComponentProps {
 
 const SkeletonLoader = () => {
     return (
-        <div className="dark:bg-slate-800 bg-white shadow-lg rounded-lg p-4 mt-4">
+        <div className="dark:bg-[#282a2c] bg-white shadow-lg rounded-lg p-4 mt-4">
             <div className="flex items-center">
                 <div className="h-4 bg-gray-300 rounded-full dark:bg-gray-600 w-32 mb-4 animate-pulse"></div>
             </div>
@@ -103,7 +103,7 @@ const LLMResponseComponent = ({ llmResponse, currentLlmResponse, index, semantic
             {hasLlmResponse || hasCurrentLlmResponse ? (
                 <>
                     {hasLlmResponse ? (
-                        <div className="dark:bg-slate-800 bg-white shadow-lg rounded-lg p-4 mt-4">
+                        <div className="dark:bg-[#282a2c] bg-white shadow-lg rounded-lg p-4 mt-4">
                             <div className="flex items-center">
                                 <h2 className="text-lg font-semibold flex-grow dark:text-white text-black">Response</h2>
                             </div>

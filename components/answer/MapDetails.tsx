@@ -21,7 +21,7 @@ const LocationSidebar = ({ places }: { places: Place[] }) => {
     places = places.slice(0, 4);
 
     return (
-        <div className="bg-white dark:bg-gray-800 shadow-lg rounded-lg p-4 mt-4">
+        <div className="bg-white dark:bg-[#282a2c] shadow-lg rounded-lg p-4 mt-4">
             <div className="flex items-center">
                 <h2 className="text-lg font-semibold flex-grow text-black dark:text-white">Location Details</h2>
                 {places.length > 3 && (
@@ -36,7 +36,7 @@ const LocationSidebar = ({ places }: { places: Place[] }) => {
             </div>
             <div className={`space-y-4 transition-all duration-500 ${showMore ? 'max-h-[5000px]' : 'max-h-[300px]'} overflow-hidden`}>
                 {places?.slice(0, showMore ? places.length : 3).map((place: Place) => (
-                    <div key={place.cid} className="bg-gray-100 dark:bg-gray-700 rounded-lg p-4">
+                    <div key={place.cid} className="bg-gray-100 dark:bg-[#313436] rounded-lg p-4">
                         <h3 className="text-lg font-semibold mb-2">{place.title}</h3>
                         <p className="text-gray-600 dark:text-gray-400 text-sm mb-2">{place.address}</p>
                         <div className="flex items-center mb-2">

@@ -382,7 +382,7 @@ export default function Page() {
                   .map((tool) => (
                     <li
                       key={tool.id}
-                      className="flex items-center cursor-pointer dark:bg-slate-800 bg-white shadow-lg rounded-lg p-4 mb-2"
+                      className="flex items-center cursor-pointer dark:bg-[#282a2c] bg-white shadow-lg rounded-lg p-4 mb-2"
                       onClick={() => {
                         setSelectedMentionTool(tool.id);
                         setSelectedMentionToolLogo(tool.logo);
@@ -427,7 +427,7 @@ export default function Page() {
               if (!value) return;
             }}
           >
-            <div className="relative flex flex-col w-full overflow-hidden max-h-60 grow dark:bg-slate-800 bg-gray-100 border sm:px-2">
+            <div className="relative flex flex-col w-full overflow-hidden max-h-60 grow dark:bg-[#282a2c] bg-gray-100 border sm:px-2">
               {selectedMentionToolLogo && (
                 <img
                   src={selectedMentionToolLogo}

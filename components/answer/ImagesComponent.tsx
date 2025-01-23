@@ -58,7 +58,7 @@ const ImagesComponent: React.FC<ImagesComponentProps> = ({ images }) => {
     const currentImage = images[photoIndex];
 
     return (
-        <div className="bg-white dark:bg-gray-800 shadow-lg rounded-lg mt-4 w-full px-2 flex items-center justify-center">
+        <div className="bg-white dark:bg-[#282a2c] shadow-lg rounded-lg mt-4 w-full px-2 flex items-center justify-center">
             <Carousel
                 plugins={[
                     Autoplay({

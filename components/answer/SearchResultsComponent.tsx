@@ -66,7 +66,7 @@ const SearchResultsComponent = ({ searchResults }: { searchResults: SearchResult
 
     // 11. Render the 'SearchResultsComponent'
     return (
-        <div className="dark:bg-slate-800 bg-white shadow-lg rounded-lg p-4 mt-4">
+        <div className="dark:bg-[#282a2c] bg-white shadow-lg rounded-lg p-4 mt-4">
             <div className="flex items-center">
                 <h2 className="text-lg font-semibold flex-grow dark:text-white text-black">Sources</h2>
             </div>
@@ -79,7 +79,7 @@ const SearchResultsComponent = ({ searchResults }: { searchResults: SearchResult
                         {/* 13. Render the search results with favicon, title, and link */}
                         {visibleResults.map((result, index) => (
                             <div key={`searchResult-${index}`} className="p-2 w-full md:w-1/4">
-                                <div className="flex items-center space-x-2 dark:bg-slate-700 bg-gray-100 p-3 rounded-lg h-full">
+                                <div className="flex items-center space-x-2 dark:bg-[#313436] bg-gray-100 p-3 rounded-lg h-full">
                                     {result.favicon.length > 0 && !loadedFavicons[index] && (
                                         <div className="w-5 h-5 dark:bg-slate-600 bg-gray-400 rounded animate-pulse"></div>
                                     )}
@@ -101,7 +101,7 @@ const SearchResultsComponent = ({ searchResults }: { searchResults: SearchResult
                         <div className="w-full sm:w-full md:w-1/4 p-2">
                             <div
                                 onClick={toggleExpansion}
-                                className="flex items-center space-x-2 dark:bg-slate-700 bg-gray-100 p-3 rounded-lg cursor-pointer h-12 justify-center"
+                                className="flex items-center space-x-2 dark:dark:bg-[#3b3e41] bg-gray-100 p-3 rounded-lg cursor-pointer h-12 justify-center"
                             >
                                 {!isExpanded ? (
                                     <>

@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Sidebar, GithubLogo, NotePencil } from '@phosphor-icons/react';
+import { Sidebar, GithubLogo, NotePencil, Person, PersonSimple, PersonSimpleTaiChi, GenderMale, DevToLogo } from '@phosphor-icons/react';
+import { FaceIcon } from '@radix-ui/react-icons';
 
 export function Header() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -13,26 +14,35 @@ export function Header() {
 
   return (
     <>
-      <header className="sticky top-0 z-[500] flex items-center justify-between w-full px-4 border-b h-14 shrink-0 dark:bg-slate-800 bg-white backdrop-blur-xl">
-        <div className="flex items-center justify-end space-x-2">
+      <header className="sticky top-0 z-[500] flex items-center justify-between w-full px-4 border-b h-14 shrink-0 bg-white dark:bg-[#282a2c] backdrop-blur-xl">
+        <div className="flex items-center">
 
           {/* <Sidebar size={24} /> */}
           <a href="./">
             <NotePencil size={24} />
           </a>
         </div>
-        <span className="inline-flex items-center home-links whitespace-nowrap">
+        <span className="flex-1 flex justify-center items-center home-links whitespace-nowrap">
           <a href="http://lookinit.com/" rel="noopener" target="_blank">
-            <span className="block sm:inline text-lg sm:text-xl lg:text-2xl font-semibold dark:text-white text-black">LookInit.com</span>
+            <span className="block sm:inline text-lg sm:text-xl lg:text-2xl font-semibold dark:text-white text-black">LookInit</span>
           </a>
         </span>
         <a
           target="_blank"
           href="https://github.com/abhishzk"
           rel="noopener noreferrer"
+          className="ml-auto"
 
         >
           <GithubLogo size={24} />
+        </a>
+        <a
+          target="_blank"
+          href="https://abhishzk.com"
+          rel="noopener"
+
+        >
+          <DevToLogo size={24} />
         </a>
       </header>
       {/* <Sidebar isOpen={isSidebarOpen} onClose={toggleSidebar} /> */}

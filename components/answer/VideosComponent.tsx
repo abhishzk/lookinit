@@ -55,7 +55,7 @@ const VideosComponent: React.FC<VideosComponentProps> = ({ videos }) => {
 
     // 9. Render the 'VideosComponent' JSX
     return (
-        <div className="bg-white dark:bg-gray-800 shadow-lg rounded-lg mt-4 w-full px-2 flex items-center justify-center">
+        <div className="bg-white dark:bg-[#282a2c] shadow-lg rounded-lg mt-4 w-full px-2 flex items-center justify-center">
             {/* 10. Render the video carousel */}
             <Carousel
                 opts={{
