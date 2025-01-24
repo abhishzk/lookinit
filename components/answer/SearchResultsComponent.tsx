@@ -44,21 +44,21 @@ const SearchResultsComponent = ({ searchResults }: { searchResults: SearchResult
         <>
             {Array.from({ length: isExpanded ? searchResults.length : 3 }).map((_, index) => (
                 <div key={`skeleton-${index}`} className="p-2 w-full sm:w-1/2 md:w-1/4">
-                    <div className="flex items-center space-x-2 dark:bg-slate-700 bg-gray-100 p-3 rounded-lg h-full">
+                    <div className="flex items-center space-x-2 dark:bg-[#3b3e41] bg-gray-100 p-3 rounded-lg h-full">
                         {searchResults[index]?.favicon.length > 0 && (
-                            <div className="w-5 h-5 dark:bg-slate-600 bg-gray-400 rounded animate-pulse"></div>
+                            <div className="w-5 h-5 dark:bg-[#313436] bg-gray-400 rounded animate-pulse"></div>
                         )}
-                        <div className="w-full h-4 dark:bg-slate-600 bg-gray-400 rounded animate-pulse"></div>
+                        <div className="w-full h-4 dark:bg-[#313436] bg-gray-400 rounded animate-pulse"></div>
                     </div>
                 </div>
             ))}
             {/* Add a skeleton for the "View more" button */}
             <div className="w-full sm:w-full md:w-1/4 p-2">
-                <div className="flex items-center space-x-2 dark:bg-slate-700 bg-gray-100 p-3 rounded-lg h-12 justify-center">
-                    <div className="w-5 h-5 dark:bg-slate-600 bg-gray-400 rounded animate-pulse"></div>
-                    <div className="w-5 h-5 dark:bg-slate-600 bg-gray-400 rounded animate-pulse"></div>
-                    <div className="w-5 h-5 dark:bg-slate-600 bg-gray-400 rounded animate-pulse"></div>
-                    <div className="w-full h-4 dark:bg-slate-600 bg-gray-400 rounded animate-pulse"></div>
+                <div className="flex items-center space-x-2 dark:bg-[#313436] bg-gray-100 p-3 rounded-lg h-12 justify-center">
+                    <div className="w-5 h-5 dark:bg-[#3b3e41] bg-gray-400 rounded animate-pulse"></div>
+                    <div className="w-5 h-5 dark:bg-[#3b3e41] bg-gray-400 rounded animate-pulse"></div>
+                    <div className="w-5 h-5 dark:bg-[#3b3e41] bg-gray-400 rounded animate-pulse"></div>
+                    <div className="w-full h-4 dark:bg-[#3b3e41] bg-gray-400 rounded animate-pulse"></div>
                 </div>
             </div>
         </>

@@ -12,7 +12,7 @@ import { Providers } from '@/components/providers';
 const meta = {
   title: 'Results, simple and smart.',
   description:
-    'AI Search Engine',
+    'AI Answer Engine',
 };
 export const metadata: Metadata = {
   ...meta,

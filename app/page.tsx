@@ -368,7 +368,7 @@ export default function Page() {
       <div className={`px-2 fixed inset-x-0 bottom-0 w-full bg-gradient-to-b duration-300 ease-in-out animate-in dark:from-gray-900/10 dark:from-10% peer-[[data-state=open]]:group-[]:lg:pl-[250px] peer-[[data-state=open]]:group-[]:xl:pl-[300px]] mb-4 bring-to-front`}>
         <div className="mx-auto max-w-xl sm:px-4 ">
           {messages.length === 0 && !inputValue && (
-            <InitialQueries questions={['What’s the most iconic music festival of all time?', 'How has Tesla’s stock performed over the last year?', 'Where can I find the best rooftop bar in Dublin, Ireland?', 'What’s the most underrated travel destination in 2025?']} handleFollowUpClick={handleFollowUpClick} />
+            <InitialQueries questions={['What’s the most iconic music festival of all time?', 'How has Tesla’s stock performed over the last year?', 'What are the best rooftop bars in Dublin, Ireland?', 'Show most underrated travel destination in 2025?']} handleFollowUpClick={handleFollowUpClick} />
           )}
           {mentionQuery && (
             <div className="">
@@ -509,7 +509,15 @@ export default function Page() {
           </form>
         </div>
       </div>
-      <div className="pb-[80px] pt-4 md:pt-10"></div>
+      <div className="pb-[80px] pt-4 md:pt-10">
+      {/* <a href="https://example.com" target="_blank" rel="noopener noreferrer">
+    <img 
+      src="https://via.placeholder.com/300" 
+      alt="Descriptive Text" 
+      className="w-full h-auto rounded-md shadow-md hover:opacity-90 transition-opacity duration-200"
+    />
+  </a> */}
+      </div>
     </div>
   );
 };

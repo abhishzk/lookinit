@@ -33,10 +33,10 @@ const ShoppingComponent: React.FC<ShoppingComponentProps> = ({ shopping }) => {
         <>
             {Array.from({ length: 5 }).map((_, index) => (
                 <div key={index} className="flex items-center space-x-4">
-                    <div className="w-10 h-10 bg-gray-300 dark:bg-gray-700 rounded-full animate-pulse"></div>
+                    <div className="w-10 h-10 bg-gray-300 dark:bg-[#3b3e41] rounded-full animate-pulse"></div>
                     <div className="flex-grow">
-                        <div className="w-2/3 h-4 bg-gray-300 dark:bg-gray-700 rounded animate-pulse mb-2"></div>
-                        <div className="w-1/2 h-4 bg-gray-300 dark:bg-gray-700 rounded animate-pulse"></div>
+                        <div className="w-2/3 h-4 bg-gray-300 dark:bg-[#3b3e41] rounded animate-pulse mb-2"></div>
+                        <div className="w-1/2 h-4 bg-gray-300 dark:bg-[#3b3e41] rounded animate-pulse"></div>
                     </div>
                 </div>
             ))}

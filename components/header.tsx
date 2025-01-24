@@ -14,37 +14,48 @@ export function Header() {
 
   return (
     <>
-      <header className="sticky top-0 z-[500] flex items-center justify-between w-full px-4 border-b h-14 shrink-0 bg-white dark:bg-[#282a2c] backdrop-blur-xl">
+      <header className="sticky top-0 z-[500] flex items-center justify-between w-full px-4 h-14 shrink-0 bg-[#f9f9f9] dark:bg-[#1B1C1D] backdrop-blur-xl">
         <div className="flex items-center">
-
-          {/* <Sidebar size={24} /> */}
           <a href="./">
             <NotePencil size={24} />
           </a>
         </div>
-        <span className="flex-1 flex justify-center items-center home-links whitespace-nowrap">
-          <a href="http://lookinit.com/" rel="noopener" target="_blank">
-            <span className="block sm:inline text-lg sm:text-xl lg:text-2xl font-semibold dark:text-white text-black">LookInit</span>
+
+        {/* Logo Section */}
+        <div className="absolute left-1/2 transform -translate-x-1/2 flex items-center">
+          <a href="https://lookinit.com/" rel="noopener" target="_blank" className="flex items-center">
+            <img
+              src="bg.png"
+              alt="LookInit Logo"
+              className="h-16 w-auto sm:h-20 lg:h-24 dark:hidden"
+            />
+            <img
+              src="bgw.png"
+              alt="LookInit Logo White"
+              className="hidden dark:block h-16 w-auto sm:h-20 lg:h-24"
+            />
           </a>
-        </span>
-        <a
-          target="_blank"
-          href="https://github.com/abhishzk"
-          rel="noopener noreferrer"
-          className="ml-auto"
+        </div>
 
-        >
-          <GithubLogo size={24} />
-        </a>
-        <a
-          target="_blank"
-          href="https://abhishzk.com"
-          rel="noopener"
-
-        >
-          <DevToLogo size={24} />
-        </a>
+        {/* GitHub and DevTo */}
+        <div className="ml-auto flex items-center gap-4">
+          <a
+            target="_blank"
+            href="https://github.com/abhishzk"
+            rel="noopener noreferrer"
+          >
+            <GithubLogo size={24} />
+          </a>
+          <a
+            target="_blank"
+            href="https://abhishzk.com"
+            rel="noopener"
+          >
+            <DevToLogo size={24} />
+          </a>
+        </div>
       </header>
+
       {/* <Sidebar isOpen={isSidebarOpen} onClose={toggleSidebar} /> */}
     </>
   );
