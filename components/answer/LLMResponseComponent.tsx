@@ -18,7 +18,7 @@ const Modal = ({ message, onClose }: { message: string; onClose: () => void }) =
     }, [onClose]);
 
     return (
-        <div className="fixed top-0 right-0 mt-4 mr-4 z-50 bg-white dark:bg-gray-800 shadow-lg rounded-lg p-4 w-full max-w-sm">
+        <div className="fixed top-0 right-0 mt-4 mr-4 z-50 bg-white dark:bg-[#313436] shadow-lg rounded-lg p-4 w-full max-w-sm">
             <div className="flex items-center">
                 <h2 className="text-lg font-semibold flex-grow text-black dark:text-white">Notice</h2>
                 <div className="flex justify-center ml-2">
