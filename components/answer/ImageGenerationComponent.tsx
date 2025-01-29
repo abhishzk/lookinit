@@ -22,7 +22,7 @@ export default function Image({ src, query }: ImageProps) {
                 )}
                 <div className="flex-1 flex flex-col justify-center items-center">
                     {query && (
-                        <div className="text-black text-xl font-bold mb-4">
+                        <div className="dark:text-white text-xl font-bold mb-4">
                             {query}
                         </div>
                     )}

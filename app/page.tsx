@@ -368,7 +368,7 @@ export default function Page() {
       <div className={`px-2 fixed inset-x-0 bottom-0 w-full bg-gradient-to-b duration-300 ease-in-out animate-in dark:from-gray-900/10 dark:from-10% peer-[[data-state=open]]:group-[]:lg:pl-[250px] peer-[[data-state=open]]:group-[]:xl:pl-[300px]] mb-4 bring-to-front`}>
         <div className="mx-auto max-w-xl sm:px-4 ">
           {messages.length === 0 && !inputValue && (
-            <InitialQueries questions={['What’s the most iconic music festival of all time?', 'How has Tesla’s stock performed over the last year?', 'What are the best rooftop bars in Ireland?', 'Show most underrated travel destination in 2025?']} handleFollowUpClick={handleFollowUpClick} />
+            <InitialQueries questions={['What’s the most iconic music festival of all time?', 'How has Tesla’s stock performed over the last year?', 'What are the top attractions to visit in Dublin, Ireland?', 'Show most underrated travel destination in 2025?']} handleFollowUpClick={handleFollowUpClick} />
           )}
           {mentionQuery && (
             <div className="">
