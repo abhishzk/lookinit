@@ -41,6 +41,7 @@
     "date-fns": "^3.6.0",
     "embla-carousel-autoplay": "^8.1.5",
     "embla-carousel-react": "^8.1.5",
+    "firebase": "^11.2.0",
     "geist": "^1.2.2",
     "https": "^1.0.0",
     "i": "^0.3.7",

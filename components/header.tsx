@@ -1,11 +1,32 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { auth, googleProvider } from '@/lib/firebase';
+import { signInWithPopup } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
 import { Sidebar, GithubLogo, NotePencil, Person, PersonSimple, PersonSimpleTaiChi, GenderMale, DevToLogo } from '@phosphor-icons/react';
 import { FaceIcon } from '@radix-ui/react-icons';
 
 export function Header() {
+  const [user, setUser] = useState<any>(null);
+  const handleGoogleSignIn = async () => {
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      setUser(result.user);
+    } catch (error) {
+      console.log('Google sign-in error:', error);
+    }
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await auth.signOut();
+      setUser(null);
+    } catch (error) {
+      console.log('Sign-out error:', error);
+    }
+  };
+
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
@@ -65,8 +86,39 @@ export function Header() {
             />
           </a>
         </div>
+        {/* Login/Signup Buttons */}
+        <div className="ml-auto flex items-center gap-2">
+          {user ? (
+            <div className="flex items-center gap-2">
+              {user.photoURL && (
+                <div className="w-8 h-8 rounded-full overflow-hidden">
+                  <img 
+                    src={user.photoURL} 
+                    alt={user.displayName || 'User profile'} 
+                    className="w-full h-full object-cover"
+                    referrerPolicy="no-referrer"
+                  />
+                </div>
+              )}
+              <Button variant="ghost" onClick={handleSignOut}>
+                Logout
+              </Button>
+            </div>
+          ) : (
+            <Button variant="ghost" className="flex items-center gap-1" onClick={handleGoogleSignIn}>
+              <PersonSimple size={18} />
+              Login with Google
+            </Button>
+          )}
+          {/* <Button variant="default" className="flex items-center gap-1">
+            <PersonSimpleTaiChi size={18} />
+            Sign Up
+          </Button> */}
+        </div>
 
-        {/* GitHub and DevTo */}
+
+
+        {/* GitHub and DevTo
         <div className="ml-auto flex items-center gap-4">
           <a
             target="_blank"
@@ -82,15 +134,13 @@ export function Header() {
           >
             <DevToLogo size={24} />
           </a>
-        </div>
+        </div>  */}
       </header>
 
       {/* <Sidebar isOpen={isSidebarOpen} onClose={toggleSidebar} /> */}
     </>
   );
-}
-
-// const Sidebar = ({ isOpen, onClose }) => {
+}// const Sidebar = ({ isOpen, onClose }) => {
 //   const [settings, setSettings] = useState({
 //     model: 'groq-mixtral',
 //     toggleSetting: false,
