@@ -2,13 +2,24 @@
 
 import { useState, useEffect } from 'react';
 import { auth, googleProvider } from '@/lib/firebase';
-import { signInWithPopup } from 'firebase/auth';
+import { signInWithPopup, User } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
 import { Sidebar, GithubLogo, NotePencil, Person, PersonSimple, PersonSimpleTaiChi, GenderMale, DevToLogo } from '@phosphor-icons/react';
 import { FaceIcon } from '@radix-ui/react-icons';
 
+import { onAuthStateChanged } from 'firebase/auth';
+
 export function Header() {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
   const handleGoogleSignIn = async () => {
     try {
       const result = await signInWithPopup(auth, googleProvider);
