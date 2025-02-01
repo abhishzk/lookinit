@@ -229,3 +229,10 @@
   transform: translateY(0);
   transition: transform 0.3s ease-in-out;
 }
+@media (max-width: 640px) {
+  .header-buttons {
+    position: absolute;
+    right: 1rem;
+    top: 1rem;
+  }
+}

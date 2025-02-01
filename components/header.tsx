@@ -98,7 +98,7 @@ export function Header() {
           </a>
         </div>
         {/* Login/Signup Buttons */}
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex items-center gap-2 header-buttons">
           {user ? (
             <div className="flex items-center gap-2">
               {user.photoURL && (
@@ -116,15 +116,14 @@ export function Header() {
               </Button>
             </div>
           ) : (
-            <Button variant="ghost" className="flex items-center gap-1" onClick={handleGoogleSignIn}>
-              <PersonSimple size={18} />
-              Login with Google
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" className="flex items-center gap-1" onClick={handleGoogleSignIn}>
+                <PersonSimple size={18} />
+                <span className="hidden sm:inline">Login with Google</span>
+                <span className="sm:hidden">Login</span>
+              </Button>
+            </div>
           )}
-          {/* <Button variant="default" className="flex items-center gap-1">
-            <PersonSimpleTaiChi size={18} />
-            Sign Up
-          </Button> */}
         </div>
 
 
