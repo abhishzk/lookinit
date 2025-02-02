@@ -11,3 +11,4 @@ node_modules
 .vscode
 .idea
 docker-compose.yml
+color.txt
