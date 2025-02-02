@@ -69,14 +69,14 @@ export function Header() {
       {/* Sidebar */}
       <div className={`fixed top-0 left-0 h-full w-64 dark:bg-[#282a2c] bg-white text-white p-5 transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-300 ease-in-out z-[1000]`}>
         {/* Close Button */}
-        <button onClick={toggleSidebar} className="absolute top-4 right-4 text-white hover:dark:bg-[#3b3e41]">
-          <X size={24} className="text-black dark:text-white"/>
+        <button onClick={toggleSidebar} className="absolute top-4 right-4 text-white ">
+          <X size={24} className="text-black dark:text-white hover:bg-gray-300 hover:dark:bg-[#3b3e41]" />
         </button>
 
         {/* Sidebar Links */}
         <nav className="mt-10">
           <a href="./" className="flex items-center gap-2 p-2 hover:dark:bg-[#3b3e41] rounded-md text-black dark:text-white hover:bg-gray-100">
-            <NotePencil size={24} className="text-black dark:text-white"/> New Chat
+            <NotePencil size={24} className="text-black dark:text-white hover:bg-gray-300"/> New Chat
           </a>
         </nav>
       </div>
@@ -116,11 +116,11 @@ export function Header() {
               <DropdownMenu.Portal>
                 <DropdownMenu.Content
                   align="end"
-                  className="w-48 bg-white dark:bg-[#282a2c] border border-gray-200 dark:border-gray-700 rounded-md shadow-lg p-2"
+                  className="w-48 bg-white dark:bg-[#282a2c] border border-gray-200 dark:border-gray-700 rounded-md shadow-lg p-2 z-[1000] mt-1"
                 >
                   <DropdownMenu.Item
                     onClick={handleSignOut}
-                    className="p-2 hover:bg-red-100 dark:hover:bg-red-700 rounded-md text-red-600 dark:text-red-400 cursor-pointer"
+                    className="p-2 hover:dark:bg-[#3b3e41] hover:bg-gray-300 rounded-md text-red-600 dark:text-red-400 cursor-pointer"
                   >
                     Logout
                   </DropdownMenu.Item>

@@ -67,7 +67,7 @@ const SkeletonLoader = () => {
     return (
         <div className="dark:bg-[#282a2c] bg-white shadow-lg rounded-lg p-4 mt-4">
             <div className="flex items-center">
-                <div className="h-4 bg-[#44474b] rounded-full dark:bg-[#3b3e41] w-32 mb-4 animate-pulse"></div>
+                <div className="h-4 bg-gray-300 rounded-full dark:bg-[#3b3e41] w-32 mb-4 animate-pulse"></div>
             </div>
             <div className="flex flex-col space-y-2">
                 <div className="h-2 bg-gray-300 rounded-full dark:bg-[#3b3e41] w-full animate-pulse delay-75"></div>
