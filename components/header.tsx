@@ -4,13 +4,14 @@ import { useState, useEffect } from 'react';
 import { auth, googleProvider } from '@/lib/firebase';
 import { signInWithPopup, User } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
-import { Sidebar, GithubLogo, NotePencil, Person, PersonSimple, PersonSimpleTaiChi, GenderMale, DevToLogo } from '@phosphor-icons/react';
-import { FaceIcon } from '@radix-ui/react-icons';
-
+import { Sidebar as SidebarIcon, NotePencil, X, PersonSimple, Chat } from '@phosphor-icons/react';
 import { onAuthStateChanged } from 'firebase/auth';
 
 export function Header() {
   const [user, setUser] = useState<User | null>(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -38,11 +39,6 @@ export function Header() {
     }
   };
 
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isVisible, setIsVisible] = useState(true);
-  const [lastScrollY, setLastScrollY] = useState(0);
-
-
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
@@ -52,10 +48,8 @@ export function Header() {
       const currentScrollY = window.scrollY;
 
       if (currentScrollY > lastScrollY && currentScrollY > 50) {
-        // Hide the header when scrolling down
         setIsVisible(false);
       } else {
-        // Show the header when scrolling up
         setIsVisible(true);
       }
 
@@ -71,44 +65,46 @@ export function Header() {
 
   return (
     <>
-      <header
-        className={`sticky top-0 z-[500] flex items-center justify-between w-full px-4 h-14 shrink-0 bg-[#f9f9f9] dark:bg-[#1B1C1D] backdrop-blur-xl ${
-          isVisible ? 'header-visible' : 'header-hidden'
-        }`}
-      >
-        <div className="flex items-center">
-          <a href="./">
-            <NotePencil size={24} />
+      {/* Sidebar */}
+      <div className={`fixed top-0 left-0 h-full w-64 dark:bg-[#282a2c] bg-white text-white p-5 transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-300 ease-in-out z-[1000]`}>
+        {/* Close Button */}
+        <button onClick={toggleSidebar} className="absolute top-4 right-4 text-white hover:dark:bg-[#3b3e41]">
+          <X size={24} className="text-black dark:text-white"/>
+        </button>
+
+        {/* Sidebar Links */}
+        <nav className="mt-10">
+          <a href="./" className="flex items-center gap-2 p-2 hover:dark:bg-[#3b3e41] rounded-md text-black dark:text-white hover:bg-gray-100">
+            <NotePencil size={24} className="text-black dark:text-white"/> New Chat
           </a>
-        </div>
+        </nav>
+      </div>
+
+      {/* Sidebar Overlay */}
+      {isSidebarOpen && <div className="fixed inset-0 bg-black bg-opacity-50 z-[999]" onClick={toggleSidebar} />}
+
+      {/* Header */}
+      <header className={`sticky top-0 z-[500] flex items-center justify-between w-full px-4 h-14 shrink-0 bg-[#f9f9f9] dark:bg-[#1B1C1D] backdrop-blur-xl ${isVisible ? 'header-visible' : 'header-hidden'}`}>
+        {/* Sidebar Toggle Button */}
+        <button onClick={toggleSidebar} className="p-2 hover:bg-gray-300 hover:dark:bg-[#282a2c] text-black rounded-md">
+          <SidebarIcon size={24} className="text-black dark:text-white" />
+        </button>
 
         {/* Logo Section */}
         <div className="absolute left-1/2 transform -translate-x-1/2 flex items-center">
           <a href="https://lookinit.com/" rel="noopener" target="_blank" className="flex items-center">
-            <img
-              src="bg.png"
-              alt="LookInit Logo"
-              className="h-16 w-auto sm:h-20 lg:h-24 dark:hidden"
-            />
-            <img
-              src="bgw.png"
-              alt="LookInit Logo White"
-              className="hidden dark:block h-16 w-auto sm:h-20 lg:h-24"
-            />
+            <img src="bg.png" alt="LookInit Logo" className="h-16 w-auto sm:h-20 lg:h-24 dark:hidden" />
+            <img src="bgw.png" alt="LookInit Logo White" className="hidden dark:block h-16 w-auto sm:h-20 lg:h-24" />
           </a>
         </div>
+
         {/* Login/Signup Buttons */}
-        <div className="ml-auto flex items-center gap-2 header-buttons">
+        <div className="ml-auto flex items-center gap-2">
           {user ? (
             <div className="flex items-center gap-2">
               {user.photoURL && (
                 <div className="w-8 h-8 rounded-full overflow-hidden">
-                  <img 
-                    src={user.photoURL} 
-                    alt={user.displayName || 'User profile'} 
-                    className="w-full h-full object-cover"
-                    referrerPolicy="no-referrer"
-                  />
+                  <img src={user.photoURL} alt={user.displayName || 'User profile'} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                 </div>
               )}
               <Button variant="ghost" onClick={handleSignOut}>
@@ -125,6 +121,11 @@ export function Header() {
             </div>
           )}
         </div>
+      </header>
+    </>
+  );
+}
+
 
 
 
@@ -145,12 +146,10 @@ export function Header() {
             <DevToLogo size={24} />
           </a>
         </div>  */}
-      </header>
+      
 
       {/* <Sidebar isOpen={isSidebarOpen} onClose={toggleSidebar} /> */}
-    </>
-  );
-}// const Sidebar = ({ isOpen, onClose }) => {
+ // const Sidebar = ({ isOpen, onClose }) => {
 //   const [settings, setSettings] = useState({
 //     model: 'groq-mixtral',
 //     toggleSetting: false,
