@@ -27,11 +27,7 @@ export function Header() {
       const result = await signInWithPopup(auth, googleProvider);
       setUser(result.user);
     } catch (error) {
-      if ((error as any).code === 'auth/popup-closed-by-user') {
-        console.log('The popup was closed before completing the sign-in.');
-      } else {
-        console.log('Google sign-in error:', error);
-      }
+      console.log('Google sign-in error:', error);
     }
   };
 
@@ -67,17 +63,6 @@ export function Header() {
       window.removeEventListener('scroll', handleScroll);
     };
   }, [lastScrollY]);
-
-  if (!user) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <Button onClick={handleGoogleSignIn}>
-          <GoogleLogo size={18} />
-          <span className="ml-2">Login with Google</span>
-        </Button>
-      </div>
-    );
-  }
 
   return (
     <>
