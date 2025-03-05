@@ -16,7 +16,7 @@ To set up Lookinit locally, follow these steps:
 
 1. Clone the repository:
    ```sh
-   git clone https://github.com/yourusername/lookinit.git
+   git clone https://github.com/abhishzk/lookinit.git
    ```
 2. Navigate to the project directory:
    ```sh
