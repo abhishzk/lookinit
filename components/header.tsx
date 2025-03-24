@@ -94,8 +94,8 @@ export function Header() {
         {/* Logo Section */}
         <div className="absolute left-1/2 transform -translate-x-1/2 flex items-center">
           <a href="https://lookinit.com/" rel="noopener" target="_blank" className="flex items-center">
-            <img src="bg.png" alt="LookInit Logo" className="h-16 w-auto sm:h-20 lg:h-24 dark:hidden" />
-            <img src="bgw.png" alt="LookInit Logo White" className="hidden dark:block h-16 w-auto sm:h-20 lg:h-24" />
+            <img src="bg.png" alt="Lookinit Logo" className="h-16 w-auto sm:h-20 lg:h-24 dark:hidden" />
+            <img src="bgw.png" alt="Lookinit Logo White" className="hidden dark:block h-16 w-auto sm:h-20 lg:h-24" />
           </a>
         </div>
 

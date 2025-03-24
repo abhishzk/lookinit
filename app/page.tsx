@@ -468,7 +468,7 @@ export default function Page() {
                 ref={inputRef}
                 tabIndex={0}
                 onKeyDown={onKeyDown}
-                placeholder="Ask LookInit or @ to explore other AI"
+                placeholder="Ask Lookinit or @ to explore other AI models"
                 className={`w-full resize-none bg-transparent px-4 py-[1.3rem] focus-within:outline-none sm:text-sm dark:text-white text-black pr-[45px] ${selectedMentionToolLogo ? 'pl-10' : ''
                   }
                   ${showRAG ? 'pl-20' : ''
