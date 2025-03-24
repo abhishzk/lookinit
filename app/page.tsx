@@ -29,6 +29,7 @@ import { ArrowUp, Paperclip } from '@phosphor-icons/react';
 // OPTIONAL: Use Upstash rate limiting to limit the number of requests per user
 import RateLimit from '@/components/answer/RateLimit';
 import { mentionToolConfig } from './tools/mentionToolConfig';
+import NewsTicker from './NewsTicker';
 // 2. Set up types
 interface SearchResult {
   favicon: string;
@@ -517,13 +518,7 @@ export default function Page() {
         </div>
       </div>
       <div className="pb-[80px] pt-4 md:pt-10">
-      {/* <a href="https://example.com" target="_blank" rel="noopener noreferrer">
-    <img 
-      src="https://via.placeholder.com/300" 
-      alt="Descriptive Text" 
-      className="w-full h-auto rounded-md shadow-md hover:opacity-90 transition-opacity duration-200"
-    />
-  </a> */}
+        <NewsTicker />
       </div>
     </div>
   );
