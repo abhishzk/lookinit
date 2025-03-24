@@ -17,8 +17,8 @@ const meta = {
 export const metadata: Metadata = {
   ...meta,
   title: {
-    default: 'LookInit',
-    template: `%s - LookInit`,
+    default: 'Lookinit',
+    template: `%s - Lookinit`,
   },
   icons: {
     icon: '/favicon.ico',
