@@ -372,46 +372,53 @@ export default function Page() {
           )}
           {mentionQuery && (
             <div className="">
-              <div className="flex items-center">
-              </div>
-              <ul>
-                {mentionTools
-                  .filter((tool) =>
-                    tool.name.toLowerCase().includes(mentionQuery.toLowerCase())
-                  )
-                  .map((tool) => (
-                    <li
-                      key={tool.id}
-                      className="flex items-center cursor-pointer dark:bg-[#282a2c] bg-white shadow-lg rounded-lg p-4 mb-2"
-                      onClick={() => {
-                        setSelectedMentionTool(tool.id);
-                        setSelectedMentionToolLogo(tool.logo);
-                        tool.enableRAG && setShowRAG(true);
-                        setMentionQuery("");
-                        setInputValue(" "); // Update the input value with a single blank space
-                      }}
-                    >
-                      {tool.logo ?
-                        <img
-                          src={tool.logo}
-                          alt={tool.name}
-                          className="w-6 h-6 rounded-full"
-                        /> :
-                        <span role="img" aria-label="link" className="mr-2 dark:text-white text-black">
-                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" className="h-4 w-4">
-                            <path d="M224 128a8 8 0 0 1-8 8h-80v80a8 8 0 0 1-16 0v-80H40a8 8 0 0 1 0-16h80V40a8 8 0 0 1 16 0v80h80a8 8 0 0 1 8 8Z"></path>
-                          </svg>
-                        </span>
-                      }
-
-
-                      <p className="ml-2 dark:text-white block sm:inline text-md sm:text-lg font-semibold dark:text-white text-black">
-                        @{tool.name}
-                      </p>
-                    </li>
-                  ))}
-              </ul>
-            </div>
+            <div className="flex items-center"></div>
+            <ul className="max-h-64 overflow-y-auto">
+              {mentionTools
+                .filter((tool) =>
+                  tool.name.toLowerCase().includes(mentionQuery.toLowerCase())
+                )
+                .map((tool) => (
+                  <li
+                    key={tool.id}
+                    className="flex items-center cursor-pointer dark:bg-[#282a2c] bg-white shadow-lg rounded-lg p-4 mb-2"
+                    onClick={() => {
+                      setSelectedMentionTool(tool.id);
+                      setSelectedMentionToolLogo(tool.logo);
+                      tool.enableRAG && setShowRAG(true);
+                      setMentionQuery("");
+                      setInputValue(" "); // Update the input value with a single blank space
+                    }}
+                  >
+                    {tool.logo ? (
+                      <img
+                        src={tool.logo}
+                        alt={tool.name}
+                        className="w-6 h-6 rounded-full"
+                      />
+                    ) : (
+                      <span
+                        role="img"
+                        aria-label="link"
+                        className="mr-2 dark:text-white text-black"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 256 256"
+                          fill="currentColor"
+                          className="h-4 w-4"
+                        >
+                          <path d="M224 128a8 8 0 0 1-8 8h-80v80a8 8 0 0 1-16 0v-80H40a8 8 0 0 1 0-16h80V40a8 8 0 0 1 16 0v80h80a8 8 0 0 1 8 8Z"></path>
+                        </svg>
+                      </span>
+                    )}
+                    <p className="ml-2 dark:text-white block sm:inline text-md sm:text-lg font-semibold dark:text-white text-black">
+                      @{tool.name}
+                    </p>
+                  </li>
+                ))}
+            </ul>
+          </div>
           )}
           <form
             ref={formRef}
