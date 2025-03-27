@@ -19,5 +19,7 @@ export const mentionToolConfig = {
         { id: 'fal-ai/stable-diffusion-v3-medium', name: 'fal.ai Stable Diffusion 3 - Image Generation ', logo: 'https://avatars.githubusercontent.com/u/74778219?s=200&v=4', functionName: 'falAiStableDiffusion3Medium' },
         // Bright Data - Targeted Web Scraping
         { id: 'bright-data-web-unlock', name: 'Bright Data - Web Unlock / Puppeteer', logo: './bright-data-logo.png', functionName: 'brightDataWebScraper', enableRAG: false },
+        // DeepSeek
+        { id: 'deepseek', name: 'DeepSeek', logo: 'https://example.com/deepseek-logo.png', functionName: 'deepSeekFunction', enableRAG: true },
     ],
 };
