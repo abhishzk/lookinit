@@ -32,7 +32,7 @@ export default function NewsTicker() {
   }, []);
 
   return (
-    <div className="relative overflow-hidden bg-gray-100 dark:bg-[#1B1C1D] py-4 h-48 flex items-center scrollbar-hide animate-scroll">
+    <div className="relative overflow-hidden bg-gray-100 dark:bg-[#1B1C1D] py-4 h-20 flex items-center scrollbar-hide animate-scroll">
       {/* <div className="flex space-x-6 overflow-x-auto scrollbar-hide animate-scroll w-full px-8"> */}
       <Marquee speed={30} gradient={false} pauseOnHover={true}>
         {news.map((item, index) => (
@@ -41,16 +41,16 @@ export default function NewsTicker() {
             href={item.link}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex bg-white dark:bg-[#282a2c] shadow-md rounded-lg p-4 w-[20rem] h-24 hover:shadow-lg transition-shadow duration-300 mx-3 news-item-hover"
+            className="flex bg-white dark:bg-[#282a2c] shadow-md rounded-lg p-4 w-[20rem] h-20 hover:shadow-lg transition-shadow duration-300 mx-3 news-item-hover"
           >
             <img
               src={item.image}
               alt={item.title}
-              className="w-16 h-16 object-cover rounded-md mr-4"
+              className="w-15 h-15 object-cover rounded-md mr-4"
             />
             <div className="flex-1 overflow-hidden">
               <p
-                className="text-sm text-gray-800 dark:text-gray-200 font-medium mb-2 line-clamp-3"
+                className="text-sm text-gray-800 dark:text-gray-200 font-medium mb-2 line-clamp-2"
               >
                 {item.title}
               </p>

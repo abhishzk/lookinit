@@ -127,6 +127,9 @@ export default function Page() {
   const [selectedMentionTool, setSelectedMentionTool] = useState<string | null>(null);
   const [selectedMentionToolLogo, setSelectedMentionToolLogo] = useState<string | null>(null);
   const [showRAG, setShowRAG] = useState(false);
+  const [showNewsTicker, setShowNewsTicker] = useState(true);
+
+  const [isExpanded, setIsExpanded] = useState(true); // State to toggle the size of the Textarea
   // 3. Set up action that will be used to stream all the messages
   const { myAction } = useActions<typeof AI>();
   // 4. Set up form submission handling
@@ -174,6 +177,25 @@ export default function Page() {
     e.preventDefault();
     if (!inputValue.trim()) return;
     setInputValue('');
+     setShowNewsTicker(false); // Hide the news ticker on form submission
+
+    // Add this function inside your Page component
+const handleModelSelection = (toolId: string, toolLogo: string, enableRAG: boolean) => {
+  setSelectedMentionTool(toolId);
+  setSelectedMentionToolLogo(toolLogo);
+  enableRAG && setShowRAG(true);
+  setMentionQuery("");
+  setInputValue(" "); // Update the input value with a single blank space
+  
+  // Focus the textarea and scroll into view
+  setTimeout(() => {
+    if (inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, 100);
+};
+
 
     const payload = {
       message: inputValue.trim(),
@@ -367,10 +389,10 @@ export default function Page() {
         </div>
       )}
       <div className={`px-2 fixed inset-x-0 bottom-0 w-full bg-gradient-to-b duration-300 ease-in-out animate-in dark:from-gray-900/10 dark:from-10% peer-[[data-state=open]]:group-[]:lg:pl-[250px] peer-[[data-state=open]]:group-[]:xl:pl-[300px]] mb-4 bring-to-front`}>
-        <div className="mx-auto max-w-xl sm:px-4 ">
-          {messages.length === 0 && !inputValue && (
+        <div className="mx-auto max-w-3xl sm:px-4 ">
+          {/* {messages.length === 0 && !inputValue && (
             <InitialQueries questions={['What’s the most iconic music festival of all time?', 'How has Tesla’s stock performed over the last year?', 'What are the top attractions to visit in Dublin, Ireland?', 'Show most underrated travel destination in 2025?']} handleFollowUpClick={handleFollowUpClick} />
-          )}
+          )} */}
           {mentionQuery && (
             <div className="">
             <div className="flex items-center"></div>
@@ -382,7 +404,7 @@ export default function Page() {
                 .map((tool) => (
                   <li
                     key={tool.id}
-                    className="flex items-center cursor-pointer dark:bg-[#282a2c] bg-white shadow-lg rounded-lg p-4 mb-2"
+                    className="flex items-center cursor-pointer dark:bg-[#282a2c] bg-white shadow-lg rounded-lg p-4 mb-1"
                     onClick={() => {
                       setSelectedMentionTool(tool.id);
                       setSelectedMentionToolLogo(tool.logo);
@@ -426,6 +448,7 @@ export default function Page() {
             onSubmit={async (e: FormEvent<HTMLFormElement>) => {
               e.preventDefault();
               handleFormSubmit(e);
+              setIsExpanded(false); // Shrink the Textarea after submission
               setCurrentLlmResponse('');
               if (window.innerWidth < 600) {
                 (e.target as HTMLFormElement)['message']?.blur();
@@ -434,12 +457,14 @@ export default function Page() {
               setInputValue('');
               if (!value) return;
             }}
+            className={`w-full ${isExpanded ? 'max-w-3xl' : 'max-w-2xl'}`} // Adjust width based on state
           >
-            <div className="relative flex flex-col w-full overflow-hidden max-h-60 grow dark:bg-[#282a2c] bg-gray-100 border sm:px-2">
+            <div className={`relative flex flex-col w-full overflow-hidden bg-white dark:bg-[#282a2c] border rounded-lg shadow-lg p-4 ${isExpanded ? 'h-48' : 'h-24'}`} // Adjust height based on state
+            >
               {selectedMentionToolLogo && (
                 <img
                   src={selectedMentionToolLogo}
-                  className="absolute left-2 top-4 w-8 h-8"
+                  className="absolute left-3 top-4 w-8 h-8 z-10"
                 />
               )}
               {showRAG && (
@@ -470,17 +495,13 @@ export default function Page() {
                 tabIndex={0}
                 onKeyDown={onKeyDown}
                 placeholder="Ask Lookinit or @ to explore other AI models"
-                className={`w-full resize-none bg-transparent px-4 py-[1.3rem] focus-within:outline-none sm:text-sm dark:text-white text-black pr-[45px] ${selectedMentionToolLogo ? 'pl-10' : ''
-                  }
-                  ${showRAG ? 'pl-20' : ''
-                  }
-                  `}
+                className={`w-full resize-none bg-transparent px-4 py-3 focus:outline-none sm:text-sm dark:text-white text-black ${isExpanded ? 'text-lg' : 'text-sm'} ${selectedMentionToolLogo ? 'pl-16' : ''}`} // Adjust font size based on state
                 autoFocus
                 spellCheck={false}
                 autoComplete="off"
                 autoCorrect="off"
                 name="message"
-                rows={1}
+                rows={isExpanded ? 5 : 1} // Adjust rows based on state
                 value={inputValue}
                 onChange={(e) => {
                   const value = e.target.value;
@@ -501,8 +522,8 @@ export default function Page() {
                   }
                 }}
               />
-              <ChatScrollAnchor trackVisibility={true} />
-              <div className="absolute right-5 top-4">
+              <ChatScrollAnchor trackVisibility={false} />
+              <div className="absolute right-5 bottom-5">
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button type="submit" size="icon" disabled={inputValue === ''}>
@@ -516,9 +537,11 @@ export default function Page() {
             </div>
           </form>
         </div>
-      </div>
-      <div className="pb-[80px] pt-4 md:pt-10">
-        <NewsTicker />
+        {showNewsTicker && (
+          <div className="pb-[80px] pt-4 md:pt-10">
+            <NewsTicker />
+          </div>
+        )}
       </div>
     </div>
   );
