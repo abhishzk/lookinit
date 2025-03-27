@@ -436,7 +436,7 @@ const handleModelSelection = (toolId: string, toolLogo: string, enableRAG: boole
                       </span>
                     )}
                     <p className="ml-2 dark:text-white block sm:inline text-md sm:text-lg font-semibold dark:text-white text-black">
-                      @{tool.name}
+                      {tool.name}
                     </p>
                   </li>
                 ))}
@@ -459,7 +459,7 @@ const handleModelSelection = (toolId: string, toolLogo: string, enableRAG: boole
             }}
             className={`w-full ${isExpanded ? 'max-w-3xl' : 'max-w-2xl'}`} // Adjust width based on state
           >
-            <div className={`relative flex flex-col w-full overflow-hidden bg-white dark:bg-[#282a2c] border rounded-lg shadow-lg p-4 ${isExpanded ? 'h-48' : 'h-24'}`} // Adjust height based on state
+            <div className={`relative flex flex-col w-full overflow-hidden bg-white dark:bg-[#282a2c] border rounded-lg shadow-lg p-4 ${isExpanded ? 'h-40' : 'h-24'}`} // Adjust height based on state
             >
               {selectedMentionToolLogo && (
                 <img
