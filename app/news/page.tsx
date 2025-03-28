@@ -14,6 +14,7 @@ interface NewsItem {
 export default function NewsPage() {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [email, setEmail] = useState('');
   const { toast } = useToast();
 
   useEffect(() => {
@@ -47,6 +48,45 @@ export default function NewsPage() {
       month: 'long', 
       day: 'numeric' 
     });
+  };
+
+  const handleSubscribe = async () => {
+    if (!email) {
+      toast({
+        title: "Error",
+        description: "Please enter a valid email address.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/subscribe', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Subscription failed');
+      }
+
+      toast({
+        title: "Success",
+        description: "You have successfully subscribed to the newsletter!",
+        variant: "default",
+      });
+      setEmail(''); // Clear the input field
+    } catch (error) {
+      console.error('Subscription error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to subscribe. Please try again later.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -114,9 +154,11 @@ export default function NewsPage() {
           <input 
             type="email" 
             placeholder="Your email address" 
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             className="flex-grow px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 dark:bg-[#282a2c] dark:text-white"
           />
-          <Button>Subscribe</Button>
+          <Button onClick={handleSubscribe}>Subscribe</Button>
         </div>
       </div>
     </div>
