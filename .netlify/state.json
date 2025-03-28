@@ -1,0 +1,21 @@
+{
+	"geolocation": {
+		"data": {
+			"city": "Dublin",
+			"country": {
+				"code": "IE",
+				"name": "Ireland"
+			},
+			"subdivision": {
+				"code": "L",
+				"name": "Leinster"
+			},
+			"timezone": "Europe/Dublin",
+			"latitude": 53.3843,
+			"longitude": -6.4203,
+			"postalCode": "D15"
+		},
+		"timestamp": 1743119545643
+	},
+	"siteId": "9ace7251-b90f-4d51-a11b-ba716747f7f3"
+}
