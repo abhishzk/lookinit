@@ -57,11 +57,11 @@ export default function ProPage() {
     <div className="max-w-6xl mx-auto px-4 py-12">
       <h1 className="text-3xl font-bold text-center mb-12 dark:text-white">Upgrade to Lookinit Pro</h1>
       
-      <div className="grid md:grid-cols-3 gap-8 mb-16">
+      <div className="flex justify-center gap-8 mb-16">
         {/* Basic Plan */}
         <div className="bg-white dark:bg-[#282a2c] rounded-lg shadow-lg p-8 border border-gray-200 dark:border-gray-700">
           <h2 className="text-xl font-bold mb-4 dark:text-white">Basic</h2>
-          <p className="text-3xl font-bold mb-6 dark:text-white">$9<span className="text-lg font-normal">/month</span></p>
+          <p className="text-3xl font-bold mb-6 dark:text-white">€5.99{<span className="text-lg font-normal">/month</span>}</p>
           <ul className="space-y-3 mb-8">
             <li className="flex items-center dark:text-gray-300">
               <svg className="w-5 h-5 mr-2 text-green-500" fill="currentColor" viewBox="0 0 20 20">
@@ -97,7 +97,7 @@ export default function ProPage() {
             POPULAR
           </div>
           <h2 className="text-xl font-bold mb-4 dark:text-white">Pro</h2>
-          <p className="text-3xl font-bold mb-6 dark:text-white">$19<span className="text-lg font-normal">/month</span></p>
+          <p className="text-3xl font-bold mb-6 dark:text-white">€9.99<span className="text-lg font-normal">/month</span></p>
           <ul className="space-y-3 mb-8">
             <li className="flex items-center dark:text-gray-300">
               <svg className="w-5 h-5 mr-2 text-green-500" fill="currentColor" viewBox="0 0 20 20">
@@ -130,45 +130,6 @@ export default function ProPage() {
             disabled={isLoading}
           >
             {isLoading && selectedPlan === 'pro' ? 'Processing...' : 'Subscribe'}
-          </Button>
-        </div>
-        
-        {/* Enterprise Plan */}
-        <div className="bg-white dark:bg-[#282a2c] rounded-lg shadow-lg p-8 border border-gray-200 dark:border-gray-700">
-          <h2 className="text-xl font-bold mb-4 dark:text-white">Enterprise</h2>
-          <p className="text-3xl font-bold mb-6 dark:text-white">$49<span className="text-lg font-normal">/month</span></p>
-          <ul className="space-y-3 mb-8">
-            <li className="flex items-center dark:text-gray-300">
-              <svg className="w-5 h-5 mr-2 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-              Unlimited everything
-            </li>
-            <li className="flex items-center dark:text-gray-300">
-              <svg className="w-5 h-5 mr-2 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-              Dedicated support
-            </li>
-            <li className="flex items-center dark:text-gray-300">
-              <svg className="w-5 h-5 mr-2 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-              Custom AI model training
-            </li>
-            <li className="flex items-center dark:text-gray-300">
-              <svg className="w-5 h-5 mr-2 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-              API access
-            </li>
-          </ul>
-          <Button 
-            className="w-full" 
-            onClick={() => handleSubscribe('enterprise')}
-            disabled={isLoading}
-          >
-            {isLoading && selectedPlan === 'enterprise' ? 'Processing...' : 'Subscribe'}
           </Button>
         </div>
       </div>
