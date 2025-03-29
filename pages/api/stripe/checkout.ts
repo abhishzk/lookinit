@@ -2,7 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import Stripe from 'stripe';
 
 const stripe = new Stripe(process.env.STRIPE_API_KEY!, {
-  apiVersion: '2023-10-16', // Update to a current API version
+  apiVersion: '2025-02-24.acacia', // Update to a current API version
 });
 
 // Define your pricing plans
