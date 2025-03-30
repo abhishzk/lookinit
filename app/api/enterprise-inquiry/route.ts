@@ -122,6 +122,47 @@ async function sendToCRM(formData: z.infer<typeof inquirySchema>) {
   return Promise.resolve(); // Placeholder
 }
 
+// Add this function definition before you use it in your POST handler
+async function sendConfirmationEmail(formData: z.infer<typeof inquirySchema>) {
+  const mailOptions = {
+    from:  `"Lookinit" <${process.env.EMAIL_FROM}>`,
+    to: formData.email, // Send to the user's email address
+    subject: `Thank you for your inquiry, ${formData.name}`,
+    text: `
+      Dear ${formData.name},
+
+      Thank you for reaching out to Lookinit. We have received your inquiry and our team will get back to you shortly.
+
+      Here's a summary of your message:
+      
+      Company: ${formData.company}
+      Inquiry Type: ${formData.inquiryType || 'General'}
+      Message: ${formData.message}
+
+      If you have any additional questions, please don't hesitate to contact us.
+
+      Best regards,
+      The Lookinit Team
+    `,
+    html: `
+      <h2>Thank you for reaching out to Lookinit</h2>
+      <p>Dear ${formData.name},</p>
+      <p>We have received your inquiry and our team will get back to you shortly.</p>
+      
+      <h3>Your message summary:</h3>
+      <p><strong>Company:</strong> ${formData.company}</p>
+      <p><strong>Inquiry Type:</strong> ${formData.inquiryType || 'General'}</p>
+      <p><strong>Message:</strong> ${formData.message}</p>
+      
+      <p>If you have any additional questions, please don't hesitate to contact us.</p>
+      
+      <p>Best regards,<br>
+      The Lookinit Team</p>
+    `,
+  };
+
+  return transporter.sendMail(mailOptions);
+}
 
 export async function POST(request: Request) {
   try {
@@ -175,6 +216,7 @@ export async function POST(request: Request) {
     await Promise.all([
     //   saveToDatabase(validatedData),
       sendEmailNotification(validatedData),
+      sendConfirmationEmail(validatedData),
       sendToCRM(validatedData)
     ]);
     
