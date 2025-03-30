@@ -24,7 +24,7 @@ export async function POST(req: Request) {
     }
 
     // Update these URLs to use your actual frontend URL
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://lookinit.com/pro';
 
     // Create a checkout session
     const session = await stripe.checkout.sessions.create({
