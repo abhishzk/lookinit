@@ -25,7 +25,7 @@ export default function EnterprisePage() {
                   <iframe
                       width="100%"
                       height="400"
-                      src="https://www.youtube.com/embed/dQw4w9WgXcQ"  // Replace this with your actual video link
+                      src="https://drive.google.com/file/d/1OlgyyteA4mbDIhZcgpO6ckH-bk4UfAGY/view?usp=drive_link"  // Replace this with your actual video link
                       title="Lookinit Demo"
                       frameBorder="0"
                       allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
