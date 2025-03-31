@@ -3,6 +3,7 @@ import { GeistMono } from 'geist/font/mono';
 import { GeistSans } from 'geist/font/sans';
 import { Analytics } from '@vercel/analytics/react';
 import { Toaster } from '@/components/ui/toaster';
+import Footer from '@/components/Footer';
 import './globals.css';
 
 import { AI } from './action';
@@ -68,6 +69,7 @@ export default function RootLayout({
               <main className="flex flex-col flex-1 bg-muted/50 dark:bg-background px-4">
                 {children}
               </main>
+              <Footer />
             </div>
           </Providers>
         </AI>
