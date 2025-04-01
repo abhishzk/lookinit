@@ -9,6 +9,12 @@ import { useEnterSubmit } from '@/lib/hooks/use-enter-submit';
 import { Tooltip, TooltipContent, TooltipTrigger, } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
 import dynamic from 'next/dynamic';
+
+// Add these imports at the top
+import { getSearchCount, incrementSearchCount, isSearchLimitReached, SEARCH_LIMIT } from '@/lib/search-counter';
+import PaymentPrompt from '@/components/answer/PaymentPrompt';
+import { useToast } from '@/components/ui/use-toast';
+
 // Main components 
 import SearchResultsComponent from '@/components/answer/SearchResultsComponent';
 import UserMessageComponent from '@/components/answer/UserMessageComponent';
@@ -122,6 +128,7 @@ interface Shopping {
 const mentionTools = mentionToolConfig.useMentionQueries ? mentionToolConfig.mentionTools : [];
 
 export default function Page() {
+  const { toast } = useToast();
   const [file, setFile] = useState('');
   const [mentionQuery, setMentionQuery] = useState('');
   const [selectedMentionTool, setSelectedMentionTool] = useState<string | null>(null);
@@ -213,6 +220,35 @@ const handleModelSelection = (toolId: string, toolLogo: string, enableRAG: boole
   const handleUserMessageSubmission = async (payload: {
     logo: any; message: string; mentionTool: string | null, file: string
   }): Promise<void> => {
+    // Check if search limit is reached
+  if (isSearchLimitReached()) {
+    // Add the payment prompt message
+    const paymentPromptMessage = {
+      id: Date.now(),
+      type: 'paymentPrompt',
+      userMessage: '',
+      content: '',
+      images: [],
+      videos: [],
+      followUp: null,
+      isStreaming: false,
+      status: 'searchLimitReached',
+      isolatedView: false,
+      falBase64Image: null,
+    };
+    setMessages(prevMessages => [...prevMessages, {...paymentPromptMessage, logo: undefined, semanticCacheKey: null, cachedData: ''}]);    return;  }
+     // Increment the search count
+  const newCount = incrementSearchCount();
+  
+  // Show toast notification about remaining searches
+  if (newCount < SEARCH_LIMIT) {
+    toast({
+      title: `Search ${newCount} of ${SEARCH_LIMIT}`,
+      description: `You have ${SEARCH_LIMIT - newCount} free searches remaining.`,
+      duration: 3000,
+    });
+  }
+
     const newMessageId = Date.now();
     const newMessage = {
       id: newMessageId,
@@ -331,7 +367,9 @@ const handleModelSelection = (toolId: string, toolLogo: string, enableRAG: boole
         <div className="flex flex-col pb-32 md:pb-40">
           {messages.map((message, index) => (
             <div key={`message-${index}`}>
-              {message.isolatedView ? (
+             {message.status === 'searchLimitReached' ? (
+      <PaymentPrompt />):
+              message.isolatedView ? (
                 selectedMentionTool === 'fal-ai/stable-diffusion-v3-medium'
                   || message.falBase64Image
                   ? (
