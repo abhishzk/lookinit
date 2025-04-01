@@ -19,60 +19,62 @@ export default function EnterprisePage() {
           Empower your business with Lookinit's powerful search technology. Discover how Lookinit can transform your search experience and boost productivity.
         </p>
 
-              {/* Video Section */}
-              <div className="video-container mb-12">
-                  <h2 className="text-2xl font-semibold mb-4">Watch How Lookinit Works</h2>
-                  <iframe
-                      width="100%"
-                      height="400"
-                      src="https://drive.google.com/file/d/1OlgyyteA4mbDIhZcgpO6ckH-bk4UfAGY/view?usp=drive_link"  // Replace this with your actual video link
-                      title="Lookinit Demo"
-                      frameBorder="0"
-                      allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                  ></iframe>
-              </div>
-          </section>
+        {/* Video Section */}
+<div className="video-container mb-12 flex flex-col items-center justify-center">
+    <h2 className="text-2xl font-semibold mb-4">Watch How Lookinit Works</h2>
+    <div className="w-full max-w-[800px]">
+        <iframe 
+            src="https://drive.google.com/file/d/1OlgyyteA4mbDIhZcgpO6ckH-bk4UfAGY/preview?autoplay" 
+            width="800" 
+            height="480" 
+            allow="autoplay"
+            className="mx-auto"
+        ></iframe>
+    </div>
+</div>
 
-          {/* Pricing Section */}
-          <section className="pricing mb-12">
-              <h2 className="text-3xl font-bold mb-4">Pricing Plans</h2>
-              <div className="flex flex-col md:flex-row justify-center items-center gap-8">
-                  <div className="pricing-card p-6 border rounded-lg shadow-lg flex flex-col items-center w-[400px] h-auto">
-                      <h3 className="text-xl font-semibold mb-4">Self Serve</h3>
-                      <p className="text-gray-600 mb-4">For growing teams with advanced needs.</p>
-                      <p className="text-2xl font-bold mb-4">€20/month</p>
-                      <ul className="text-gray-600 mb-4 text-center">
-                          <li>Up to 10 Users</li>
-                          <li>Advanced Search Features</li>
-                          <li>Priority Support</li>
-                      </ul>
-                      <button
-                          className="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 mt-auto"
-                          onClick={navigateToForm}
-                      >
-                          Get Started
-                      </button>
-                  </div>
 
-                  <div className="pricing-card p-6 border rounded-lg shadow-lg flex flex-col items-center w-[400px] h-auto">
-                      <h3 className="text-xl font-semibold mb-4">Custom Plan</h3>
-                      <p className="text-gray-600 mb-4">Large enterprises with custom needs.</p>
-                      <p className="text-2xl font-bold mb-4">Contact us</p>
-                      <ul className="text-gray-600 mb-4 text-center">
-                          <li>Unlimited Users</li>
-                          <li>Custom Search Features</li>
-                          <li>Dedicated Support</li>
-                      </ul>
-                      <button
-                          className="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 mt-auto"
-                          onClick={navigateToForm}
-                      >
-                          Contact Us
-                      </button>
-                  </div>
-              </div>
-          </section>
+      </section>
+
+      {/* Pricing Section */}
+      <section className="pricing mb-12">
+        <h2 className="text-3xl font-bold mb-4">Pricing Plans</h2>
+        <div className="flex flex-col md:flex-row justify-center items-center gap-8">
+          <div className="pricing-card p-6 border rounded-lg shadow-lg flex flex-col items-center w-[400px] h-auto">
+            <h3 className="text-xl font-semibold mb-4">Self Serve</h3>
+            <p className="text-gray-600 mb-4">For growing teams with advanced needs.</p>
+            <p className="text-2xl font-bold mb-4">€20/month</p>
+            <ul className="text-gray-600 mb-4 text-center">
+              <li>Up to 10 Users</li>
+              <li>Advanced Search Features</li>
+              <li>Priority Support</li>
+            </ul>
+            <button
+              className="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 mt-auto"
+              onClick={navigateToForm}
+            >
+              Get Started
+            </button>
+          </div>
+
+          <div className="pricing-card p-6 border rounded-lg shadow-lg flex flex-col items-center w-[400px] h-auto">
+            <h3 className="text-xl font-semibold mb-4">Custom Plan</h3>
+            <p className="text-gray-600 mb-4">Large enterprises with custom needs.</p>
+            <p className="text-2xl font-bold mb-4">Contact us</p>
+            <ul className="text-gray-600 mb-4 text-center">
+              <li>Unlimited Users</li>
+              <li>Custom Search Features</li>
+              <li>Dedicated Support</li>
+            </ul>
+            <button
+              className="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 mt-auto"
+              onClick={navigateToForm}
+            >
+              Contact Us
+            </button>
+          </div>
+        </div>
+      </section>
 
       {/* Features Section */}
       <section className="features mb-12">
