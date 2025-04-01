@@ -1,32 +1,24 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import Link from 'next/link';
-import { CheckCircle } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
+import { Header } from '@/components/header';
+import { Button } from '@/components/ui/button';
+import { CheckCircle } from '@phosphor-icons/react';
+import { useToast } from '@/components/ui/use-toast';
 
 export default function SuccessPage() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const sessionId = searchParams?.get('session_id') ?? null;
-  const [paymentVerified, setPaymentVerified] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [verifying, setVerifying] = useState(true);
+  const [verified, setVerified] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
-    console.log('Success page reached');
-    console.log('Session ID:', sessionId);
-
-    // Verify the payment with Stripe
-    const verifyPayment = async () => {
-      if (!sessionId) {
-        setError('No session ID provided');
-        setLoading(false);
-        return;
-      }
+    async function verifySession() {
+      if (!sessionId) return;
 
       try {
-        // You'll need to create this API endpoint
         const response = await fetch('/api/stripe/verify-session', {
           method: 'POST',
           headers: {
@@ -36,79 +28,87 @@ export default function SuccessPage() {
         });
 
         const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.error || 'Failed to verify payment');
+        
+        if (response.ok && data.success) {
+          setVerified(true);
+          toast({
+            title: 'Subscription Activated',
+            description: 'Your subscription has been successfully activated.',
+          });
+        } else {
+          toast({
+            title: 'Verification Failed',
+            description: data.error || 'Failed to verify your subscription.',
+            variant: 'destructive',
+          });
         }
-
-        // Payment verified successfully
-        setPaymentVerified(true);
-        
-        // Here you would typically update the user's subscription status in your database
-        // This will be implemented later when you add plan restrictions
-        
-      } catch (err) {
-        console.error('Error verifying payment:', err);
-        setError(err instanceof Error ? err.message : 'An unknown error occurred');
+      } catch (error) {
+        console.error('Error verifying session:', error);
+        toast({
+          title: 'Verification Error',
+          description: 'An error occurred while verifying your subscription.',
+          variant: 'destructive',
+        });
       } finally {
-        setLoading(false);
+        setVerifying(false);
       }
-    };
+    }
 
-    verifyPayment();
-  }, [sessionId]);
+    verifySession();
+  }, [sessionId, toast]);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-4">
-      <div className="max-w-md w-full bg-white dark:bg-[#282a2c] p-8 rounded-lg shadow-md">
-        {loading ? (
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-lg">Verifying your payment...</p>
-          </div>
-        ) : error ? (
-          <div className="text-center">
-            <h1 className="text-2xl font-bold mb-4 text-red-600">Verification Failed</h1>
-            <p className="mb-6">{error}</p>
-            <div className="flex flex-col space-y-4">
-              <Link 
-                href="/pro"
-                className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition-colors text-center"
-              >
-                Try Again
-              </Link>
-              <Link 
-                href="/"
-                className="text-blue-600 hover:text-blue-800 text-center"
+    <div>
+      <Header />
+      <div className="container mx-auto py-16 px-4">
+        <div className="max-w-md mx-auto bg-white dark:bg-[#282a2c] rounded-lg shadow-lg p-8 text-center">
+          {verifying ? (
+            <div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <h1 className="text-2xl font-bold mb-2">Verifying your subscription...</h1>
+              <p className="text-gray-600 dark:text-gray-400">Please wait while we confirm your payment.</p>
+            </div>
+          ) : verified ? (
+            <div>
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 dark:bg-green-900/20 rounded-full mb-4">
+                <CheckCircle size={32} className="text-green-600 dark:text-green-400" />
+              </div>
+              <h1 className="text-2xl font-bold mb-2">Thank You!</h1>
+              <p className="text-gray-600 dark:text-gray-400 mb-6">
+                Your subscription has been successfully activated. You now have unlimited searches!
+              </p>
+              <div className="space-y-4">
+                <Button 
+                  className="w-full" 
+                  onClick={() => window.location.href = '/'}
+                >
+                  Start Searching
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={() => window.location.href = '/account'}
+                >
+                  View Account
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div>
+              <h1 className="text-2xl font-bold mb-2">Verification Failed</h1>
+              <p className="text-gray-600 dark:text-gray-400 mb-6">
+                We couldn't verify your subscription. Please contact support if you believe this is an error.
+              </p>
+              <Button 
+                variant="outline" 
+                className="w-full"
+                onClick={() => window.location.href = '/'}
               >
                 Return to Home
-              </Link>
+              </Button>
             </div>
-          </div>
-        ) : (
-          <div className="text-center">
-            <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
-            <h1 className="text-2xl font-bold mb-4">Payment Successful!</h1>
-            <p className="mb-6">
-              Thank you for your subscription! Your account has been upgraded successfully.
-              You now have access to all the premium features of Lookinit.
-            </p>
-            <div className="flex flex-col space-y-4">
-              <Link 
-                href="/"
-                className="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-md transition-colors text-center"
-              >
-                Start Exploring
-              </Link>
-              <Link 
-                href="/account"
-                className="text-blue-600 hover:text-blue-800 text-center"
-              >
-                View My Account
-              </Link>
-            </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );

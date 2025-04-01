@@ -1,26 +1,32 @@
+import { auth } from '@/lib/firebase';
+
 export const SEARCH_LIMIT = 3;
 
-export const getSearchCount = (): number => {
+export const getSearchCount = (userId?: string | null): number => {
   if (typeof window === 'undefined') return 0;
   
-  const count = localStorage.getItem('searchCount');
+  // Use user ID as part of the key if available
+  const key = userId ? `searchCount_${userId}` : 'searchCount_anonymous';
+  const count = localStorage.getItem(key);
   return count ? parseInt(count, 0) : 0;
 };
 
-export const incrementSearchCount = (): number => {
+export const incrementSearchCount = (userId?: string | null): number => {
   if (typeof window === 'undefined') return 0;
   
-  const currentCount = getSearchCount();
+  const key = userId ? `searchCount_${userId}` : 'searchCount_anonymous';
+  const currentCount = getSearchCount(userId);
   const newCount = currentCount + 1;
-  localStorage.setItem('searchCount', newCount.toString());
+  localStorage.setItem(key, newCount.toString());
   return newCount;
 };
 
-export const isSearchLimitReached = (): boolean => {
-  return getSearchCount() >= SEARCH_LIMIT;
+export const isSearchLimitReached = (userId?: string | null): boolean => {
+  return getSearchCount(userId) >= SEARCH_LIMIT;
 };
 
-export const resetSearchCount = (): void => {
+export const resetSearchCount = (userId?: string | null): void => {
   if (typeof window === 'undefined') return;
-  localStorage.setItem('searchCount', '0');
+  const key = userId ? `searchCount_${userId}` : 'searchCount_anonymous';
+  localStorage.setItem(key, '0');
 };
