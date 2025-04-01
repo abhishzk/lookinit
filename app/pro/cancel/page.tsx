@@ -1,13 +1,11 @@
 'use client';
 
-import { Header } from '@/components/header';
 import { Button } from '@/components/ui/button';
 import { XCircle } from '@phosphor-icons/react';
 
 export default function CancelPage() {
   return (
     <div>
-      <Header />
       <div className="container mx-auto py-16 px-4">
         <div className="max-w-md mx-auto bg-white dark:bg-[#282a2c] rounded-lg shadow-lg p-8 text-center">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-red-100 dark:bg-red-900/20 rounded-full mb-4">
