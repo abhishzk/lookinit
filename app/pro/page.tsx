@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Header } from '@/components/header';
 import { auth } from '@/lib/firebase';
 import { User } from 'firebase/auth';
 import { useToast } from '@/components/ui/use-toast';
@@ -118,7 +117,6 @@ export default function ProPage() {
           
             return (
               <div>
-                <Header />
                 <div className="container mx-auto py-10 px-4">
                   <div className="text-center mb-12">
                     <h1 className="text-3xl font-bold mb-4">Upgrade Your Lookinit Experience</h1>

@@ -5,7 +5,6 @@ import { auth } from '@/lib/firebase';
 import { User } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
-import { Header } from '@/components/header';
 import { resetSearchCount } from '@/lib/search-counter';
 
 export default function AccountPage() {
@@ -82,7 +81,6 @@ export default function AccountPage() {
   if (loading) {
     return (
       <div>
-        <Header />
         <div className="container mx-auto py-10 text-center">
           <p>Loading account information...</p>
         </div>
@@ -93,7 +91,6 @@ export default function AccountPage() {
   if (!user) {
     return (
       <div>
-        <Header />
         <div className="container mx-auto py-10 text-center">
           <h1 className="text-2xl font-bold mb-4">Account</h1>
           <p className="mb-4">Please sign in to view your account details.</p>
@@ -104,7 +101,6 @@ export default function AccountPage() {
 
   return (
     <div>
-      <Header />
       <div className="container mx-auto py-10 px-4">
         <h1 className="text-2xl font-bold mb-6">Account</h1>
         
