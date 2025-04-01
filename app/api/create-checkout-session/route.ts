@@ -7,7 +7,7 @@ const stripe = new Stripe(process.env.STRIPE_API_KEY!, {
 
 export async function POST(req: Request) {
   try {
-    const { planId, userId } = await req.json();
+    const { planId, userId, source } = await req.json();
     
     // Define price IDs for each plan (these would come from your Stripe dashboard)
     const priceIds: Record<string, string> = {
@@ -36,10 +36,11 @@ export async function POST(req: Request) {
           quantity: 1,
         },
       ],
-      success_url: `${baseUrl}/pro/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${baseUrl}/pro/cancel`,
+      success_url: `${baseUrl}/pro/success?session_id={CHECKOUT_SESSION_ID}&source=${source}`,
+      cancel_url: `${baseUrl}/pro/cancel?source=${source}`,
       metadata: {
         userId,
+        source,
       },
     });
 
