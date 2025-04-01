@@ -9,11 +9,14 @@ export async function POST(req: Request) {
   try {
     const { planId, userId, source } = await req.json();
     
+    if (!userId) {
+      return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
+    }
+    
     // Define price IDs for each plan (these would come from your Stripe dashboard)
     const priceIds: Record<string, string> = {
       basic: process.env.STRIPE_BASIC_PRICE_ID!,
       pro: process.env.STRIPE_PRO_PRICE_ID!,
-    //   enterprise: process.env.STRIPE_ENTERPRISE_PRICE_ID!,
     };
     
     if (!priceIds[planId]) {
@@ -36,12 +39,14 @@ export async function POST(req: Request) {
           quantity: 1,
         },
       ],
-      success_url: `${baseUrl}/pro/success?session_id={CHECKOUT_SESSION_ID}&source=${source}`,
-      cancel_url: `${baseUrl}/pro/cancel?source=${source}`,
+      success_url: `${baseUrl}/pro/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${baseUrl}/pro/cancel`,
       metadata: {
         userId,
-        source,
+        planId,
+        source: source || 'website',
       },
+      customer_email: req.headers.get('x-user-email') || undefined, // Optional: pass user email if available
     });
 
     return NextResponse.json({ sessionId: session.id, url: session.url });

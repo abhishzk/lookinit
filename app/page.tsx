@@ -10,7 +10,10 @@ import { Tooltip, TooltipContent, TooltipTrigger, } from '@/components/ui/toolti
 import { Button } from '@/components/ui/button';
 import dynamic from 'next/dynamic';
 
+
+
 // Add these imports at the top
+import { auth } from '@/lib/firebase';
 import { getSearchCount, incrementSearchCount, isSearchLimitReached, SEARCH_LIMIT } from '@/lib/search-counter';
 import PaymentPrompt from '@/components/answer/PaymentPrompt';
 import { useToast } from '@/components/ui/use-toast';
@@ -36,6 +39,7 @@ import { ArrowUp, Paperclip } from '@phosphor-icons/react';
 import RateLimit from '@/components/answer/RateLimit';
 import { mentionToolConfig } from './tools/mentionToolConfig';
 import NewsTicker from './NewsTicker';
+import { User } from 'firebase/auth';
 // 2. Set up types
 interface SearchResult {
   favicon: string;
@@ -128,6 +132,8 @@ interface Shopping {
 const mentionTools = mentionToolConfig.useMentionQueries ? mentionToolConfig.mentionTools : [];
 
 export default function Page() {
+  const [user, setUser] = useState<User | null>(null);
+  const [hasSubscription, setHasSubscription] = useState(false);
   const { toast } = useToast();
   const [file, setFile] = useState('');
   const [mentionQuery, setMentionQuery] = useState('');
@@ -153,28 +159,59 @@ export default function Page() {
     await handleUserMessageSubmission({ message: question, mentionTool: null, logo: null, file: file });
   }, []);
 
-  // 8. For the form submission, we need to set up a handler that will be called when the user submits the form
+  // Add this useEffect to check auth state and subscription
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === '/') {
-        if (
-          e.target &&
-          ['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement).nodeName)
-        ) {
-          return;
+    const checkSubscription = async () => {
+      const currentUser = auth.currentUser;
+      if (!currentUser) return;
+      
+      try {
+        const response = await fetch('/api/stripe/get-subscription', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ userId: currentUser.uid }),
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          setHasSubscription(data.subscription?.status === 'active');
         }
-        e.preventDefault();
-        e.stopPropagation();
-        if (inputRef?.current) {
-          inputRef.current.focus();
-        }
+      } catch (error) {
+        console.error('Error checking subscription:', error);
       }
     };
-    document.addEventListener('keydown', handleKeyDown);
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [inputRef]);
+    
+    const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
+      setUser(currentUser);
+      
+      if (currentUser) {
+        try {
+          // Check if user has an active subscription
+          const response = await fetch('/api/stripe/get-subscription', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ userId: currentUser.uid }),
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            setHasSubscription(data.subscription?.status === 'active');
+          }
+        } catch (error) {
+          console.error('Error checking subscription:', error);
+        }
+      } else {
+        setHasSubscription(false);
+      }
+    });
+    
+    return () => unsubscribe();
+  }, []);
+
   // 9. Set up handler for when a submission is made, which will call the myAction function
   const handleSubmit = async (payload: { message: string; mentionTool: string | null, logo: string | null, file: string }) => {
     if (!payload.message) return;
@@ -220,8 +257,8 @@ const handleModelSelection = (toolId: string, toolLogo: string, enableRAG: boole
   const handleUserMessageSubmission = async (payload: {
     logo: any; message: string; mentionTool: string | null, file: string
   }): Promise<void> => {
-    // Check if search limit is reached
-  if (isSearchLimitReached()) {
+   // Skip search limit check if user has subscription
+   if (!hasSubscription && isSearchLimitReached(user?.uid)) {
     // Add the payment prompt message
     const paymentPromptMessage = {
       id: Date.now(),
@@ -236,18 +273,22 @@ const handleModelSelection = (toolId: string, toolLogo: string, enableRAG: boole
       isolatedView: false,
       falBase64Image: null,
     };
-    setMessages(prevMessages => [...prevMessages, {...paymentPromptMessage, logo: undefined, semanticCacheKey: null, cachedData: ''}]);    return;  }
-     // Increment the search count
-  const newCount = incrementSearchCount();
-  
-  // Show toast notification about remaining searches
-  if (newCount < SEARCH_LIMIT) {
-    toast({
-      title: `Search ${newCount} of ${SEARCH_LIMIT}`,
-      description: `You have ${SEARCH_LIMIT - newCount} free searches remaining.`,
-      duration: 3000,
-    });
-  }
+    setMessages(prevMessages => [...prevMessages, {...paymentPromptMessage, logo: undefined, semanticCacheKey: null, cachedData: ''}]);
+    return;  }
+
+     // Only increment search count if user doesn't have subscription
+     if (!hasSubscription) {
+      const newCount = incrementSearchCount(user?.uid);
+      
+      // Show toast notification about remaining searches
+      if (newCount < SEARCH_LIMIT) {
+        toast({
+          title: `Search ${newCount} of ${SEARCH_LIMIT}`,
+          description: `You have ${SEARCH_LIMIT - newCount} free searches remaining.`,
+          duration: 3000,
+        });
+      }
+    }
 
     const newMessageId = Date.now();
     const newMessage = {
@@ -368,7 +409,7 @@ const handleModelSelection = (toolId: string, toolLogo: string, enableRAG: boole
           {messages.map((message, index) => (
             <div key={`message-${index}`}>
              {message.status === 'searchLimitReached' ? (
-      <PaymentPrompt />):
+               <PaymentPrompt />):
               message.isolatedView ? (
                 selectedMentionTool === 'fal-ai/stable-diffusion-v3-medium'
                   || message.falBase64Image
