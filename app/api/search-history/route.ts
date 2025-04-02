@@ -1,11 +1,29 @@
 import { NextResponse } from 'next/server';
-import { auth } from '@/lib/firebase-admin';
+import { getAuth } from 'firebase-admin/auth';
+import { initializeApp, getApps, cert } from 'firebase-admin/app';
+
+
 import { 
   saveSearchToHistory, 
   getUserSearchHistory, 
   deleteSearchHistoryItem, 
   clearUserSearchHistory 
 } from '@/lib/db';
+
+// Initialize Firebase Admin if it hasn't been initialized yet
+const apps = getApps();
+const serviceAccount = JSON.parse(
+  process.env.FIREBASE_SERVICE_ACCOUNT_KEY || '{}'
+);
+
+if (!apps.length) {
+  initializeApp({
+    credential: cert(serviceAccount)
+  });
+}
+
+// Get the auth instance
+const auth = getAuth();
 
 // Specify Node.js runtime
 export const runtime = 'nodejs';
