@@ -1,5 +1,7 @@
 import { initializeApp, getApps, cert } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
+import { db as firebaseDb } from './firebase-admin';
+import { DocumentReference, CollectionReference } from 'firebase-admin/firestore';
 
 // Initialize Firebase Admin if it hasn't been initialized
 if (!getApps().length) {
@@ -62,4 +64,64 @@ export async function updateUserSubscriptionStatus(
   }
   
   await db.collection('subscriptions').doc(userId).update(data);
+}
+
+export interface SearchHistoryItem {
+  id: string;
+  userId: string;
+  query: string;
+  timestamp: number;
+}
+
+export async function saveSearchToHistory(userId: string, query: string): Promise<string> {
+  if (!db) throw new Error('Firestore is not initialized');
+
+  const historyRef = db.collection('searchHistory').doc();
+  const id = historyRef.id;
+  
+  const historyItem: SearchHistoryItem = {
+    id,
+    userId,
+    query,
+    timestamp: Date.now()
+  };
+  
+  await historyRef.set(historyItem);
+  return id;
+}
+
+export async function getUserSearchHistory(userId: string, limit = 20): Promise<SearchHistoryItem[]> {
+if (!db) throw new Error('Firestore is not initialized');
+
+    const snapshot = await db.collection('searchHistory')
+    .where('userId', '==', userId)
+    .orderBy('timestamp', 'desc')
+    .limit(limit)
+    .get();
+    
+    return snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as SearchHistoryItem));
+    }
+
+export async function deleteSearchHistoryItem(id: string): Promise<void> {
+    if (!db) throw new Error('Firestore is not initialized');
+  
+    await db.collection('searchHistory').doc(id).delete();
+}
+
+export async function clearUserSearchHistory(userId: string): Promise<void> {
+  if (!db) throw new Error('Firestore is not initialized');
+
+  const snapshot = await db.collection('searchHistory')
+    .where('userId', '==', userId)
+    .get();
+    
+  const batch = db.batch();
+  snapshot.docs.forEach(doc => {
+    batch.delete(doc.ref);
+  });
+  
+  await batch.commit();
 }
