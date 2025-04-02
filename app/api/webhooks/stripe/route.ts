@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { headers } from 'next/headers';
+import { updateUserSubscriptionStatus } from '@/lib/db';
+
 
 // Add this at the top of your file
 export const runtime = 'nodejs';

@@ -1,38 +1,35 @@
 'use client';
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { XCircle } from '@phosphor-icons/react';
 
 export default function CancelPage() {
-  const router = useRouter();
-
-  // Add a console log to check if this page is being reached
-  useEffect(() => {
-    console.log('Cancel page reached');
-  }, []);
-
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-4 ">
-      <div className="max-w-md w-full bg-white p-8 rounded-lg shadow-md bg-white dark:bg-[#282a2c]">
-        <h1 className="text-2xl font-bold mb-4">Payment Cancelled</h1>
-        <p className="mb-6">
-          Your payment process was cancelled. If you have any questions or encountered any issues,
-          please feel free to contact our support team.
-        </p>
-        <div className="flex flex-col space-y-4">
-          <Link 
-            href="/pro"
-            className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition-colors text-center"
-          >
-            Try Again
-          </Link>
-          <Link 
-            href="/"
-            className="text-blue-600 hover:text-blue-800 text-center"
-          >
-            Return to Home
-          </Link>
+    <div>
+      <div className="container mx-auto py-16 px-4">
+        <div className="max-w-md mx-auto bg-white dark:bg-[#282a2c] rounded-lg shadow-lg p-8 text-center">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-red-100 dark:bg-red-900/20 rounded-full mb-4">
+            <XCircle size={32} className="text-red-600 dark:text-red-400" />
+          </div>
+          <h1 className="text-2xl font-bold mb-2">Subscription Cancelled</h1>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">
+            Your subscription process was cancelled. No charges were made.
+          </p>
+          <div className="space-y-4">
+            <Button 
+              className="w-full" 
+              onClick={() => window.location.href = '/'}
+            >
+              Return to Home
+            </Button>
+            <Button 
+              variant="outline" 
+              className="w-full"
+              onClick={() => window.location.href = '/pro'}
+            >
+              View Plans Again
+            </Button>
+          </div>
         </div>
       </div>
     </div>
