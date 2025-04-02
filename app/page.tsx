@@ -9,8 +9,7 @@ import { useEnterSubmit } from '@/lib/hooks/use-enter-submit';
 import { Tooltip, TooltipContent, TooltipTrigger, } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
 import dynamic from 'next/dynamic';
-
-
+import { saveSearchToHistory } from '@/lib/db';
 
 // Add these imports at the top
 import { auth } from '@/lib/firebase';
@@ -132,6 +131,8 @@ interface Shopping {
 const mentionTools = mentionToolConfig.useMentionQueries ? mentionToolConfig.mentionTools : [];
 
 export default function Page() {
+  // Add this state variable at the top of your Page component
+  const [searchLimitReached, setSearchLimitReached] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [hasSubscription, setHasSubscription] = useState(false);
   const { toast } = useToast();
@@ -159,13 +160,55 @@ export default function Page() {
     await handleUserMessageSubmission({ message: question, mentionTool: null, logo: null, file: file });
   }, []);
 
-  // Add this useEffect to check auth state and subscription
+  // // Add this useEffect to check auth state and subscription
+  // useEffect(() => {
+  //   const checkSubscription = async () => {
+  //     const currentUser = auth.currentUser;
+  //     if (!currentUser) return;
+
+  //     try {
+  //       const response = await fetch('/api/stripe/get-subscription', {
+  //         method: 'POST',
+  //         headers: {
+  //           'Content-Type': 'application/json',
+  //         },
+  //         body: JSON.stringify({ userId: currentUser.uid }),
+  //       });
+
+  //       if (response.ok) {
+  //         const data = await response.json();
+  //         setHasSubscription(data.subscription?.status === 'active');
+  //       }
+  //     } catch (error) {
+  //       console.error('Error checking subscription:', error);
+  //     }
+  //   };
+
+    useEffect(() => {
+      const handleSetSearchQuery = (event: Event) => {
+        const customEvent = event as CustomEvent;
+        if (customEvent.detail && customEvent.detail.query) {
+          setInputValue(customEvent.detail.query);
+          // Optional: auto-submit the query
+          // handleSubmit({ message: customEvent.detail.query, mentionTool: null, logo: null, file: '' });
+        }
+      };
+
+      window.addEventListener('set-search-query', handleSetSearchQuery);
+
+      return () => {
+        window.removeEventListener('set-search-query', handleSetSearchQuery);
+      };
+    }, []);
+
+      // This useEffect should be at the top level, not nested in another function
   useEffect(() => {
-    const checkSubscription = async () => {
+    const checkSubscriptionAndLimit = async () => {
       const currentUser = auth.currentUser;
       if (!currentUser) return;
       
       try {
+        // Check subscription
         const response = await fetch('/api/stripe/get-subscription', {
           method: 'POST',
           headers: {
@@ -176,16 +219,23 @@ export default function Page() {
         
         if (response.ok) {
           const data = await response.json();
-          setHasSubscription(data.subscription?.status === 'active');
+          const isSubscribed = data.subscription?.status === 'active';
+          setHasSubscription(isSubscribed);
+          
+          // Only check search limit if user doesn't have subscription
+          if (!isSubscribed) {
+            const limitReached = isSearchLimitReached(currentUser.uid);
+            setSearchLimitReached(limitReached);
+          }
         }
       } catch (error) {
         console.error('Error checking subscription:', error);
       }
     };
-    
+
     const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
       setUser(currentUser);
-      
+
       if (currentUser) {
         try {
           // Check if user has an active subscription
@@ -196,7 +246,7 @@ export default function Page() {
             },
             body: JSON.stringify({ userId: currentUser.uid }),
           });
-          
+
           if (response.ok) {
             const data = await response.json();
             setHasSubscription(data.subscription?.status === 'active');
@@ -208,9 +258,35 @@ export default function Page() {
         setHasSubscription(false);
       }
     });
-    
+
     return () => unsubscribe();
   }, []);
+
+  // Add this function inside your Page component or import it from the service
+  const saveSearch = async (query: string) => {
+    if (!user) return;
+
+    try {
+      // If you're using the client-side service approach
+      const token = await user.getIdToken();
+
+      const response = await fetch('/api/search-history', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ query })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save search');
+      }
+    } catch (error) {
+      console.error('Error saving search to history:', error);
+    }
+  };
+
 
   // 9. Set up handler for when a submission is made, which will call the myAction function
   const handleSubmit = async (payload: { message: string; mentionTool: string | null, logo: string | null, file: string }) => {
@@ -221,24 +297,24 @@ export default function Page() {
     e.preventDefault();
     if (!inputValue.trim()) return;
     setInputValue('');
-     setShowNewsTicker(false); // Hide the news ticker on form submission
+    setShowNewsTicker(false); // Hide the news ticker on form submission
 
     // Add this function inside your Page component
-const handleModelSelection = (toolId: string, toolLogo: string, enableRAG: boolean) => {
-  setSelectedMentionTool(toolId);
-  setSelectedMentionToolLogo(toolLogo);
-  enableRAG && setShowRAG(true);
-  setMentionQuery("");
-  setInputValue(" "); // Update the input value with a single blank space
-  
-  // Focus the textarea and scroll into view
-  setTimeout(() => {
-    if (inputRef.current) {
-      inputRef.current.focus();
-      inputRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-  }, 100);
-};
+    const handleModelSelection = (toolId: string, toolLogo: string, enableRAG: boolean) => {
+      setSelectedMentionTool(toolId);
+      setSelectedMentionToolLogo(toolLogo);
+      enableRAG && setShowRAG(true);
+      setMentionQuery("");
+      setInputValue(" "); // Update the input value with a single blank space
+
+      // Focus the textarea and scroll into view
+      setTimeout(() => {
+        if (inputRef.current) {
+          inputRef.current.focus();
+          inputRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 100);
+    };
 
 
     const payload = {
@@ -257,29 +333,49 @@ const handleModelSelection = (toolId: string, toolLogo: string, enableRAG: boole
   const handleUserMessageSubmission = async (payload: {
     logo: any; message: string; mentionTool: string | null, file: string
   }): Promise<void> => {
-   // Skip search limit check if user has subscription
-   if (!hasSubscription && isSearchLimitReached(user?.uid)) {
-    // Add the payment prompt message
-    const paymentPromptMessage = {
-      id: Date.now(),
-      type: 'paymentPrompt',
-      userMessage: '',
-      content: '',
-      images: [],
-      videos: [],
-      followUp: null,
-      isStreaming: false,
-      status: 'searchLimitReached',
-      isolatedView: false,
-      falBase64Image: null,
-    };
-    setMessages(prevMessages => [...prevMessages, {...paymentPromptMessage, logo: undefined, semanticCacheKey: null, cachedData: ''}]);
-    return;  }
+    // Skip search limit check if user has subscription
+    if (!hasSubscription && isSearchLimitReached(user?.uid)) {
+      setSearchLimitReached(true);
 
-     // Only increment search count if user doesn't have subscription
-     if (!hasSubscription) {
+      // Add the payment prompt message
+      const paymentPromptMessage = {
+        id: Date.now(),
+        type: 'paymentPrompt',
+        userMessage: '',
+        content: '',
+        images: [],
+        videos: [],
+        followUp: null,
+        isStreaming: false,
+        status: 'searchLimitReached',
+        isolatedView: false,
+        falBase64Image: null,
+        logo: undefined,
+        semanticCacheKey: null,
+        cachedData: ''
+      };
+      setMessages(prevMessages => [...prevMessages, { ...paymentPromptMessage}]);
+      return;
+    }
+
+    // Save search to history if user is logged in
+    if (user && payload.message.trim()) {
+      try {
+        //     await saveSearchToHistory(user.uid, payload.message);
+        //   } catch (error) {
+        //     console.error('Error saving search to history:', error);
+        //   }
+        // }
+        await saveSearch(payload.message);
+      } catch (error) {
+        console.error('Error saving search to history:', error);
+      }
+    }
+
+    // Only increment search count if user doesn't have subscription
+    if (!hasSubscription && user) {
       const newCount = incrementSearchCount(user?.uid);
-      
+
       // Show toast notification about remaining searches
       if (newCount < SEARCH_LIMIT) {
         toast({
@@ -408,61 +504,61 @@ const handleModelSelection = (toolId: string, toolLogo: string, enableRAG: boole
         <div className="flex flex-col pb-32 md:pb-40">
           {messages.map((message, index) => (
             <div key={`message-${index}`}>
-             {message.status === 'searchLimitReached' ? (
-               <PaymentPrompt />):
-              message.isolatedView ? (
-                selectedMentionTool === 'fal-ai/stable-diffusion-v3-medium'
-                  || message.falBase64Image
-                  ? (
-                    <ImageGenerationComponent key={`image-${index}`} src={message.falBase64Image} query={message.userMessage} />
-                  ) : (
-                    <LLMResponseComponent
-                      key={`llm-response-${index}`}
-                      llmResponse={message.content}
-                      currentLlmResponse={currentLlmResponse}
-                      index={index}
-                      semanticCacheKey={message.semanticCacheKey}
-                      isolatedView={true}
-                      logo={message.logo}
-                    />
-                  )
-              ) : (
-                // Render regular view
-                <div className="flex flex-col md:flex-row max-w-[1200px] mx-auto">
-                  <div className="w-full md:w-3/4 md:pr-2">
-                    {message.status && message.status === 'rateLimitReached' && <RateLimit />}
-                    {message.type === 'userMessage' && <UserMessageComponent message={message.userMessage} />}
-                    {message.ticker && message.ticker.length > 0 && (
-                      <FinancialChart key={`financialChart-${index}`} ticker={message.ticker} />
-                    )}
-                    {message.spotify && message.spotify.length > 0 && (
-                      <Spotify key={`financialChart-${index}`} spotify={message.spotify} />
-                    )}
-                    {message.searchResults && (<SearchResultsComponent key={`searchResults-${index}`} searchResults={message.searchResults} />)}
-                    {message.places && message.places.length > 0 && (
-                      <MapComponent key={`map-${index}`} places={message.places} />
-                    )}
-                    <LLMResponseComponent llmResponse={message.content} currentLlmResponse={currentLlmResponse} index={index} semanticCacheKey={message.semanticCacheKey} key={`llm-response-${index}`}
-                      isolatedView={false}
-                    />
-                    {message.followUp && (
-                      <div className="flex flex-col">
-                        <FollowUpComponent key={`followUp-${index}`} followUp={message.followUp} handleFollowUpClick={handleFollowUpClick} />
-                      </div>
-                    )}
-                  </div>
-                  <div className="w-full md:w-1/4 md:pl-2">
+              {message.status === 'searchLimitReached' ? (
+                <PaymentPrompt />) :
+                message.isolatedView ? (
+                  selectedMentionTool === 'fal-ai/stable-diffusion-v3-medium'
+                    || message.falBase64Image
+                    ? (
+                      <ImageGenerationComponent key={`image-${index}`} src={message.falBase64Image} query={message.userMessage} />
+                    ) : (
+                      <LLMResponseComponent
+                        key={`llm-response-${index}`}
+                        llmResponse={message.content}
+                        currentLlmResponse={currentLlmResponse}
+                        index={index}
+                        semanticCacheKey={message.semanticCacheKey}
+                        isolatedView={true}
+                        logo={message.logo}
+                      />
+                    )
+                ) : (
+                  // Render regular view
+                  <div className="flex flex-col md:flex-row max-w-[1200px] mx-auto">
+                    <div className="w-full md:w-3/4 md:pr-2">
+                      {message.status && message.status === 'rateLimitReached' && <RateLimit />}
+                      {message.type === 'userMessage' && <UserMessageComponent message={message.userMessage} />}
+                      {message.ticker && message.ticker.length > 0 && (
+                        <FinancialChart key={`financialChart-${index}`} ticker={message.ticker} />
+                      )}
+                      {message.spotify && message.spotify.length > 0 && (
+                        <Spotify key={`financialChart-${index}`} spotify={message.spotify} />
+                      )}
+                      {message.searchResults && (<SearchResultsComponent key={`searchResults-${index}`} searchResults={message.searchResults} />)}
+                      {message.places && message.places.length > 0 && (
+                        <MapComponent key={`map-${index}`} places={message.places} />
+                      )}
+                      <LLMResponseComponent llmResponse={message.content} currentLlmResponse={currentLlmResponse} index={index} semanticCacheKey={message.semanticCacheKey} key={`llm-response-${index}`}
+                        isolatedView={false}
+                      />
+                      {message.followUp && (
+                        <div className="flex flex-col">
+                          <FollowUpComponent key={`followUp-${index}`} followUp={message.followUp} handleFollowUpClick={handleFollowUpClick} />
+                        </div>
+                      )}
+                    </div>
+                    <div className="w-full md:w-1/4 md:pl-2">
 
-                    {message.shopping && message.shopping.length > 0 && <ShoppingComponent key={`shopping-${index}`} shopping={message.shopping} />}
-                    {message.images && <ImagesComponent key={`images-${index}`} images={message.images} />}
-                    {message.videos && <VideosComponent key={`videos-${index}`} videos={message.videos} />}
-                    {message.places && message.places.length > 0 && (
-                      <MapDetails key={`map-${index}`} places={message.places} />
-                    )}
-                    {message.falBase64Image && <ImageGenerationComponent key={`image-${index}`} src={message.falBase64Image} />}
+                      {message.shopping && message.shopping.length > 0 && <ShoppingComponent key={`shopping-${index}`} shopping={message.shopping} />}
+                      {message.images && <ImagesComponent key={`images-${index}`} images={message.images} />}
+                      {message.videos && <VideosComponent key={`videos-${index}`} videos={message.videos} />}
+                      {message.places && message.places.length > 0 && (
+                        <MapDetails key={`map-${index}`} places={message.places} />
+                      )}
+                      {message.falBase64Image && <ImageGenerationComponent key={`image-${index}`} src={message.falBase64Image} />}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
             </div>
           ))}
         </div>
@@ -474,53 +570,53 @@ const handleModelSelection = (toolId: string, toolLogo: string, enableRAG: boole
           )} */}
           {mentionQuery && (
             <div className="">
-            <div className="flex items-center"></div>
-            <ul className="max-h-60 overflow-y-auto">
-              {mentionTools
-                .filter((tool) =>
-                  tool.name.toLowerCase().includes(mentionQuery.toLowerCase())
-                )
-                .map((tool) => (
-                  <li
-                    key={tool.id}
-                    className="flex items-center cursor-pointer dark:bg-[#282a2c] bg-white shadow-lg rounded-lg p-2 mb-1"
-                    onClick={() => {
-                      setSelectedMentionTool(tool.id);
-                      setSelectedMentionToolLogo(tool.logo);
-                      tool.enableRAG && setShowRAG(true);
-                      setMentionQuery("");
-                      setInputValue(" "); // Update the input value with a single blank space
-                    }}
-                  >
-                    {tool.logo ? (
-                      <img
-                        src={tool.logo}
-                        alt={tool.name}
-                        className="w-6 h-6 rounded-full"
-                      />
-                    ) : (
-                      <span
-                        role="img"
-                        aria-label="link"
-                        className="mr-2 dark:text-white text-black"
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          viewBox="0 0 256 256"
-                          fill="currentColor"
-                          className="h-4 w-4"
+              <div className="flex items-center"></div>
+              <ul className="max-h-60 overflow-y-auto">
+                {mentionTools
+                  .filter((tool) =>
+                    tool.name.toLowerCase().includes(mentionQuery.toLowerCase())
+                  )
+                  .map((tool) => (
+                    <li
+                      key={tool.id}
+                      className="flex items-center cursor-pointer dark:bg-[#282a2c] bg-white shadow-lg rounded-lg p-2 mb-1"
+                      onClick={() => {
+                        setSelectedMentionTool(tool.id);
+                        setSelectedMentionToolLogo(tool.logo);
+                        tool.enableRAG && setShowRAG(true);
+                        setMentionQuery("");
+                        setInputValue(" "); // Update the input value with a single blank space
+                      }}
+                    >
+                      {tool.logo ? (
+                        <img
+                          src={tool.logo}
+                          alt={tool.name}
+                          className="w-6 h-6 rounded-full"
+                        />
+                      ) : (
+                        <span
+                          role="img"
+                          aria-label="link"
+                          className="mr-2 dark:text-white text-black"
                         >
-                          <path d="M224 128a8 8 0 0 1-8 8h-80v80a8 8 0 0 1-16 0v-80H40a8 8 0 0 1 0-16h80V40a8 8 0 0 1 16 0v80h80a8 8 0 0 1 8 8Z"></path>
-                        </svg>
-                      </span>
-                    )}
-                    <p className="ml-2 dark:text-white block sm:inline text-md sm:text-lg font-semibold dark:text-white text-black">
-                      {tool.name}
-                    </p>
-                  </li>
-                ))}
-            </ul>
-          </div>
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 256 256"
+                            fill="currentColor"
+                            className="h-4 w-4"
+                          >
+                            <path d="M224 128a8 8 0 0 1-8 8h-80v80a8 8 0 0 1-16 0v-80H40a8 8 0 0 1 0-16h80V40a8 8 0 0 1 16 0v80h80a8 8 0 0 1 8 8Z"></path>
+                          </svg>
+                        </span>
+                      )}
+                      <p className="ml-2 dark:text-white block sm:inline text-md sm:text-lg font-semibold dark:text-white text-black">
+                        {tool.name}
+                      </p>
+                    </li>
+                  ))}
+              </ul>
+            </div>
           )}
           <form
             ref={formRef}
