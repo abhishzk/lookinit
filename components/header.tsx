@@ -4,9 +4,10 @@ import { useState, useEffect } from 'react';
 import { auth, googleProvider } from '@/lib/firebase';
 import { signInWithPopup, User } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
-import { Sidebar as SidebarIcon, NotePencil, X, PersonSimple, GoogleLogo } from '@phosphor-icons/react';
+import { Sidebar as SidebarIcon, NotePencil, X, PersonSimple, GoogleLogo, UserCircle } from '@phosphor-icons/react';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import Link from 'next/link';
 
 export function Header() {
   const [user, setUser] = useState<User | null>(null);
@@ -78,6 +79,19 @@ export function Header() {
           <a href="./" className="flex items-center gap-2 p-2 hover:dark:bg-[#3b3e41] rounded-md text-black dark:text-white hover:bg-gray-100">
             <NotePencil size={24} className="text-black dark:text-white hover:bg-gray-300"/> New Chat
           </a>
+          
+          {user && (
+            <Link href="/account" className="flex items-center gap-2 p-2 hover:dark:bg-[#3b3e41] rounded-md text-black dark:text-white hover:bg-gray-100">
+              <UserCircle size={24} className="text-black dark:text-white hover:bg-gray-300"/> My Account
+            </Link>
+          )}
+          
+          <Link href="/pro" className="flex items-center gap-2 p-2 hover:dark:bg-[#3b3e41] rounded-md text-black dark:text-white hover:bg-gray-100">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 256 256">
+                <path d="M172,36H84A48.05,48.05,0,0,0,36,84v88a48.05,48.05,0,0,0,48,48h88a48.05,48.05,0,0,0,48-48V84A48.05,48.05,0,0,0,172,36ZM84,60h88a24,24,0,0,1,24,24v4H60V84A24,24,0,0,1,84,60ZM172,196H84a24,24,0,0,1-24-24V112H196v60A24,24,0,0,1,172,196Z"></path>
+              </svg> 
+              Upgrade to Pro
+            </Link>
         </nav>
       </div>
 
@@ -94,8 +108,8 @@ export function Header() {
         {/* Logo Section */}
         <div className="absolute left-1/2 transform -translate-x-1/2 flex items-center">
           <a href="https://lookinit.com/" rel="noopener" target="_blank" className="flex items-center">
-            <img src="bg.png" alt="Lookinit Logo" className="h-16 w-auto sm:h-20 lg:h-24 dark:hidden" />
-            <img src="bgw.png" alt="Lookinit Logo White" className="hidden dark:block h-16 w-auto sm:h-20 lg:h-24" />
+            <img src="/bg.png" alt="Lookinit Logo" className="h-16 w-auto sm:h-20 lg:h-24 dark:hidden" />
+            <img src="/bgw.png" alt="Lookinit Logo White" className="hidden dark:block h-16 w-auto sm:h-20 lg:h-24" />
           </a>
         </div>
 
@@ -118,6 +132,24 @@ export function Header() {
                   align="end"
                   className="w-48 bg-white dark:bg-[#282a2c] border border-gray-200 dark:border-gray-700 rounded-md shadow-lg p-2 z-[1000] mt-1"
                 >
+                  <DropdownMenu.Item className="p-2 hover:dark:bg-[#3b3e41] hover:bg-gray-300 rounded-md cursor-pointer">
+                    <Link href="/account" className="flex items-center gap-2 text-black dark:text-white w-full">
+                      <UserCircle size={18} />
+                      My Account
+                    </Link>
+                  </DropdownMenu.Item>
+                  
+                  <DropdownMenu.Item className="p-2 hover:dark:bg-[#3b3e41] hover:bg-gray-300 rounded-md cursor-pointer">
+                    <Link href="/pro" className="flex items-center gap-2 text-black dark:text-white w-full">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 256 256">
+                        <path d="M172,36H84A48.05,48.05,0,0,0,36,84v88a48.05,48.05,0,0,0,48,48h88a48.05,48.05,0,0,0,48-48V84A48.05,48.05,0,0,0,172,36ZM84,60h88a24,24,0,0,1,24,24v4H60V84A24,24,0,0,1,84,60ZM172,196H84a24,24,0,0,1-24-24V112H196v60A24,24,0,0,1,172,196Z"></path>
+                      </svg>
+                      Upgrade to Pro
+                    </Link>
+                  </DropdownMenu.Item>
+                  
+                  <DropdownMenu.Separator className="h-px bg-gray-200 dark:bg-gray-700 my-1" />
+                  
                   <DropdownMenu.Item
                     onClick={handleSignOut}
                     className="p-2 hover:dark:bg-[#3b3e41] hover:bg-gray-300 rounded-md text-red-600 dark:text-red-400 cursor-pointer"
@@ -139,3 +171,4 @@ export function Header() {
     </>
   );
 }
+
