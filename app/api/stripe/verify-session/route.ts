@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
+import { createOrUpdateUserSubscription } from '@/lib/db';
 
 const stripe = new Stripe(process.env.STRIPE_API_KEY!, {
   apiVersion: '2025-02-24.acacia',
@@ -36,7 +37,20 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'User ID not found in session metadata' }, { status: 400 });
     }
 
-    // Here you would typically update the user's subscription status in your database
+    // Get subscription details
+    const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+    
+    // Store subscription data in your database
+    await createOrUpdateUserSubscription({
+      userId,
+      customerId,
+      subscriptionId,
+      status: subscription.status,
+      planId: planId || 'basic',
+      currentPeriodEnd: subscription.current_period_end,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
     
     return NextResponse.json({
       success: true,
