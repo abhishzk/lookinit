@@ -1,6 +1,30 @@
+export const runtime = 'nodejs'; // This is crucial - must be at the top
+
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { createOrUpdateUserSubscription } from '@/lib/db';
+import { getAuth } from 'firebase-admin/auth';
+
+
+// Import Firebase Admin only in server context
+let adminDb; 
+if (typeof window === 'undefined') {
+  const { getFirestore } = require('firebase-admin/firestore');
+  const admin = require('firebase-admin');
+  
+  // Initialize Firebase Admin if not already initialized
+  if (!admin.apps.length) {
+    admin.initializeApp({
+      credential: admin.credential.cert({
+        projectId: process.env.FIREBASE_PROJECT_ID,
+        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+        privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+      }),
+    });
+  }
+  
+  adminDb = getFirestore();
+}
 
 const stripe = new Stripe(process.env.STRIPE_API_KEY!, {
   apiVersion: '2025-02-24.acacia',

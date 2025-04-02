@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { SearchHistory } from '@/components/SearchHistory';
+import { Clock } from '@phosphor-icons/react';
 import { auth, googleProvider } from '@/lib/firebase';
 import { signInWithPopup, User } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
@@ -9,7 +11,9 @@ import { onAuthStateChanged, signOut } from 'firebase/auth';
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import Link from 'next/link';
 
+
 export function Header() {
+  const [showHistory, setShowHistory] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
@@ -22,6 +26,15 @@ export function Header() {
 
     return () => unsubscribe();
   }, []);
+  // Add this function to handle selecting a query from history
+  const handleSelectHistoryQuery = (query: string) => {
+    // You'll need to implement this to set the query in the main search input
+    // This will require some state lifting or context
+    window.dispatchEvent(new CustomEvent('set-search-query', { 
+      detail: { query } 
+    }));
+    setIsSidebarOpen(false);
+  };
 
   const handleGoogleSignIn = async () => {
     try {
@@ -40,7 +53,7 @@ export function Header() {
       console.log('Sign-out error:', error);
     }
   };
-
+  
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
@@ -93,6 +106,22 @@ export function Header() {
               Upgrade to Pro
             </Link>
         </nav>
+        {/* Add the search history component */}
+        <button 
+          onClick={() => {
+            console.log("Current showHistory state:", showHistory);
+            setShowHistory(!showHistory);
+            console.log("New showHistory state:", !showHistory);
+          }}
+          className="flex items-center gap-2 p-2 w-full text-left hover:dark:bg-[#3b3e41] rounded-md text-black dark:text-white hover:bg-gray-100"
+        >
+          <Clock size={24} className="text-black dark:text-white"/> Search History
+        </button>
+        {showHistory && (
+          <div className="mt-4 border-t border-gray-200 dark:border-gray-700 pt-4">
+            <SearchHistory onSelectQuery={handleSelectHistoryQuery} />
+          </div>
+        )}
       </div>
 
       {/* Sidebar Overlay */}
