@@ -1,6 +1,8 @@
+export const runtime = "nodejs";
+
 import { initializeApp, getApps, cert } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
-import { db as firebaseDb } from './firebase-admin';
+import { adminDb as firebaseDb } from './firebase-admin';
 import { DocumentReference, CollectionReference } from 'firebase-admin/firestore';
 
 // Initialize Firebase Admin if it hasn't been initialized
@@ -27,8 +29,42 @@ export interface UserSubscription {
   updatedAt: number;
 }
 
-export async function createOrUpdateUserSubscription(data: UserSubscription): Promise<void> {
-  await db.collection('subscriptions').doc(data.userId).set(data, { merge: true });
+// export async function createOrUpdateUserSubscription(data: UserSubscription): Promise<void> {
+//   await db.collection('subscriptions').doc(data.userId).set(data, { merge: true });
+// }
+// Use dynamic imports for server-only modules
+export async function createOrUpdateUserSubscription(data: any) {
+  try {
+    // Only import and use Firebase Admin in a server context
+    if (typeof window === 'undefined') {
+      const admin = require('firebase-admin');
+      const { getFirestore } = require('firebase-admin/firestore');
+      
+      // Initialize Firebase Admin if not already initialized
+      if (!admin.apps.length) {
+        admin.initializeApp({
+          credential: admin.credential.cert({
+            projectId: process.env.FIREBASE_PROJECT_ID,
+            clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+            privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+          }),
+        });
+      }
+      
+      const db = getFirestore();
+      const userRef = db.collection('users').doc(data.userId);
+      const subscriptionRef = userRef.collection('subscriptions').doc(data.subscriptionId);
+      
+      await subscriptionRef.set(data, { merge: true });
+      return true;
+    } else {
+      console.error('Attempted to use server-only function in client context');
+      return false;
+    }
+  } catch (error) {
+    console.error('Error updating subscription:', error);
+    return false;
+  }
 }
 
 export async function getUserSubscription(userId: string): Promise<UserSubscription | null> {
