@@ -49,6 +49,7 @@
     "embla-carousel-autoplay": "^8.1.5",
     "embla-carousel-react": "^8.1.5",
     "firebase": "^11.2.0",
+    "firebase-admin": "^12.7.0",
     "geist": "^1.2.2",
     "gray-matter": "^4.0.3",
     "https": "^1.0.0",
