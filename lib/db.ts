@@ -7,18 +7,6 @@ import { getAdminDb } from './firebase-admin';
 // import { initializeApp, getApps, cert } from 'firebase-admin/app';
 // import { getFirestore } from 'firebase-admin/firestore';
 
-// Remove this initialization
-// if (!getApps().length) {
-//   initializeApp({
-//     credential: cert({
-//       projectId: process.env.FIREBASE_PROJECT_ID,
-//       clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-//       privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-//     }),
-//   });
-// }
-// const db = getFirestore();
-
 export interface UserSubscription {
   userId: string;
   customerId: string;
@@ -32,7 +20,7 @@ export interface UserSubscription {
 
 export async function createOrUpdateUserSubscription(data: any) {
   try {
-    const db = getAdminDb();
+    const db = await getAdminDb();
     if (!db) return false;
     
     const userRef = db.collection('users').doc(data.userId);
@@ -47,14 +35,19 @@ export async function createOrUpdateUserSubscription(data: any) {
 }
 
 export async function getUserSubscription(userId: string): Promise<UserSubscription | null> {
-  const db = getAdminDb();
-  if (!db) return null;
-  
-  const doc = await db.collection('subscriptions').doc(userId).get();
-  if (!doc.exists) {
+  try {
+    const db = await getAdminDb();
+    if (!db) return null;
+    
+    const doc = await db.collection('subscriptions').doc(userId).get();
+    if (!doc.exists) {
+      return null;
+    }
+    return doc.data() as UserSubscription;
+  } catch (error) {
+    console.error('Error getting user subscription:', error);
     return null;
   }
-  return doc.data() as UserSubscription;
 }
 
 export async function getCustomerIdFromUserId(userId: string): Promise<string | null> {
@@ -72,19 +65,23 @@ export async function updateUserSubscriptionStatus(
   status: string, 
   currentPeriodEnd?: number
 ): Promise<void> {
-  const db = getAdminDb();
-  if (!db) return;
-  
-  const data: Partial<UserSubscription> = {
-    status,
-    updatedAt: Date.now(),
-  };
-  
-  if (currentPeriodEnd) {
-    data.currentPeriodEnd = currentPeriodEnd;
+  try {
+    const db = await getAdminDb();
+    if (!db) return;
+    
+    const data: Partial<UserSubscription> = {
+      status,
+      updatedAt: Date.now(),
+    };
+    
+    if (currentPeriodEnd) {
+      data.currentPeriodEnd = currentPeriodEnd;
+    }
+    
+    await db.collection('subscriptions').doc(userId).update(data);
+  } catch (error) {
+    console.error('Error updating subscription status:', error);
   }
-  
-  await db.collection('subscriptions').doc(userId).update(data);
 }
 
 export interface SearchHistoryItem {
@@ -95,58 +92,76 @@ export interface SearchHistoryItem {
 }
 
 export async function saveSearchToHistory(userId: string, query: string): Promise<string> {
-  const db = getAdminDb();
-  if (!db) throw new Error('Firestore is not initialized');
+  try {
+    const db = await getAdminDb();
+    if (!db) throw new Error('Firestore is not initialized');
 
-  const historyRef = db.collection('searchHistory').doc();
-  const id = historyRef.id;
-  
-  const historyItem: SearchHistoryItem = {
-    id,
-    userId,
-    query,
-    timestamp: Date.now()
-  };
-  
-  await historyRef.set(historyItem);
-  return id;
+    const historyRef = db.collection('searchHistory').doc();
+    const id = historyRef.id;
+    
+    const historyItem: SearchHistoryItem = {
+      id,
+      userId,
+      query,
+      timestamp: Date.now()
+    };
+    
+    await historyRef.set(historyItem);
+    return id;
+  } catch (error) {
+    console.error('Error saving search history:', error);
+    throw error;
+  }
 }
 
 export async function getUserSearchHistory(userId: string, limit = 20): Promise<SearchHistoryItem[]> {
-  const db = getAdminDb();
-  if (!db) return [];
+  try {
+    const db = await getAdminDb();
+    if (!db) return [];
 
-  const snapshot = await db.collection('searchHistory')
-    .where('userId', '==', userId)
-    .orderBy('timestamp', 'desc')
-    .limit(limit)
-    .get();
-    
-  return snapshot.docs.map(doc => ({
-    id: doc.id,
-    ...doc.data()
-  } as SearchHistoryItem));
+    const snapshot = await db.collection('searchHistory')
+      .where('userId', '==', userId)
+      .orderBy('timestamp', 'desc')
+      .limit(limit)
+      .get();
+      
+    return snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    } as SearchHistoryItem));
+  } catch (error) {
+    console.error('Error getting search history:', error);
+    return [];
+  }
 }
 
 export async function deleteSearchHistoryItem(id: string): Promise<void> {
-  const db = getAdminDb();
-  if (!db) return;
+  try {
+    const db = await getAdminDb();
+    if (!db) return;
 
-  await db.collection('searchHistory').doc(id).delete();
+    await db.collection('searchHistory').doc(id).delete();
+  } catch (error) {
+    console.error('Error deleting search history item:', error);
+  }
 }
 
 export async function clearUserSearchHistory(userId: string): Promise<void> {
-  const db = getAdminDb();
-  if (!db) return;
+  try {
+    const db = await getAdminDb();
+    if (!db) return;
 
-  const snapshot = await db.collection('searchHistory')
-    .where('userId', '==', userId)
-    .get();
+    const snapshot = await db.collection('searchHistory')
+      .where('userId', '==', userId)
+      .get();
+      
+    const batch = db.batch();
+    snapshot.docs.forEach(doc => {
+      batch.delete(doc.ref);
+    });
     
-  const batch = db.batch();
-  snapshot.docs.forEach(doc => {
-    batch.delete(doc.ref);
-  });
-  
-  await batch.commit();
+    await batch.commit();
+  } catch (error) {
+    console.error('Error clearing user search history:', error);
+  }
 }
