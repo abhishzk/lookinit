@@ -3,8 +3,6 @@ import Stripe from 'stripe';
 import { headers } from 'next/headers';
 import { updateUserSubscriptionStatus } from '@/lib/db';
 
-
-
 // But then it doesn't use the validated apiKey variable
 const stripe = new Stripe(process.env.STRIPE_API_KEY!, {
   apiVersion: '2025-02-24.acacia',
