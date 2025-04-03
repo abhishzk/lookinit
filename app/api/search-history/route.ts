@@ -21,7 +21,7 @@ export async function GET(request: Request) {
   }
   
   try {
-    const auth = getAdminAuth();
+    const auth = await getAdminAuth();
     if (!auth) {
       return NextResponse.json(
         { error: 'Firebase Admin is not initialized' },
@@ -61,7 +61,7 @@ export async function POST(request: Request) {
   }
   
   try {
-    const auth = getAdminAuth();
+    const auth = await getAdminAuth();
     if (!auth) {
       return NextResponse.json(
         { error: 'Firebase Admin is not initialized' },
@@ -111,7 +111,7 @@ export async function DELETE(request: Request) {
   }
   
   try {
-    const auth = getAdminAuth();
+    const auth = await getAdminAuth();
     if (!auth) {
       return NextResponse.json(
         { error: 'Firebase Admin is not initialized' },

@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@fal-ai/serverless-client": "^0.11.0",
+    "@google-cloud/secret-manager": "^6.0.1",
     "@langchain/community": "latest",
     "@langchain/core": "^0.3.37",
     "@langchain/openai": "^0.0.25",
