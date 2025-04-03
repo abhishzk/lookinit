@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getAuth } from 'firebase-admin/auth';
-import { initializeApp, getApps, cert } from 'firebase-admin/app';
-
+import { auth } from '@/lib/firebase-admin';
 
 import { 
   saveSearchToHistory, 
@@ -10,27 +8,17 @@ import {
   clearUserSearchHistory 
 } from '@/lib/db';
 
-// Initialize Firebase Admin if it hasn't been initialized yet
-const apps = getApps();
-const serviceAccount = JSON.parse(
-  process.env.FIREBASE_SERVICE_ACCOUNT_KEY || '{}'
-);
-
-if (!apps.length) {
-  initializeApp({
-    credential: cert(serviceAccount)
-  });
-}
-
-// Get the auth instance
-const auth = getAuth();
-
 // Specify Node.js runtime
 export const runtime = 'nodejs';
 
 // Get user's search history
 export async function GET(request: Request) {
   try {
+    // Skip actual Firebase operations during build time
+    if (process.env.NODE_ENV === 'production' && process.env.NEXT_PHASE === 'phase-production-build') {
+      return NextResponse.json({ history: [] });
+    }
+    
     if (!auth) {
       return NextResponse.json(
         { error: 'Firebase Admin is not initialized' },
@@ -66,6 +54,11 @@ export async function GET(request: Request) {
 // Save a search to history
 export async function POST(request: Request) {
   try {
+    // Skip actual Firebase operations during build time
+    if (process.env.NODE_ENV === 'production' && process.env.NEXT_PHASE === 'phase-production-build') {
+      return NextResponse.json({ success: true, id: 'build-time-id' });
+    }
+    
     if (!auth) {
       return NextResponse.json(
         { error: 'Firebase Admin is not initialized' },
@@ -107,9 +100,15 @@ export async function POST(request: Request) {
     );
   }
 }
+
 // Delete a search history item
 export async function DELETE(request: Request) {
   try {
+    // Skip actual Firebase operations during build time
+    if (process.env.NODE_ENV === 'production' && process.env.NEXT_PHASE === 'phase-production-build') {
+      return NextResponse.json({ success: true });
+    }
+    
     if (!auth) {
       return NextResponse.json(
         { error: 'Firebase Admin is not initialized' },
