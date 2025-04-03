@@ -23,8 +23,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         success_url: `${process.env.STRIPE_CUSTOMER_PORTAL_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${process.env.STRIPE_CUSTOMER_PORTAL_URL}/pro/cancel`,
         metadata: {
-          site_name: 'Lookinit'
-          userId, // Pass user ID for tracking
+          site_name: 'Lookinit',
+          userId: String(userId) // Convert to string
         },
       });
 
