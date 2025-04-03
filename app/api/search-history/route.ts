@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-import { auth } from '@/lib/firebase-admin';
-
+import { getAdminAuth } from '@/lib/firebase-admin';
 import { 
   saveSearchToHistory, 
   getUserSearchHistory, 
@@ -11,14 +10,18 @@ import {
 // Specify Node.js runtime
 export const runtime = 'nodejs';
 
+// Check if we're in the build phase
+const isBuildPhase = process.env.NODE_ENV === 'production' && process.env.NEXT_PHASE === 'phase-production-build';
+
 // Get user's search history
 export async function GET(request: Request) {
+  // Skip during build phase
+  if (isBuildPhase) {
+    return NextResponse.json({ history: [] });
+  }
+  
   try {
-    // Skip actual Firebase operations during build time
-    if (process.env.NODE_ENV === 'production' && process.env.NEXT_PHASE === 'phase-production-build') {
-      return NextResponse.json({ history: [] });
-    }
-    
+    const auth = getAdminAuth();
     if (!auth) {
       return NextResponse.json(
         { error: 'Firebase Admin is not initialized' },
@@ -53,12 +56,12 @@ export async function GET(request: Request) {
 
 // Save a search to history
 export async function POST(request: Request) {
+  if (isBuildPhase) {
+    return NextResponse.json({ success: true, id: 'build-time-id' });
+  }
+  
   try {
-    // Skip actual Firebase operations during build time
-    if (process.env.NODE_ENV === 'production' && process.env.NEXT_PHASE === 'phase-production-build') {
-      return NextResponse.json({ success: true, id: 'build-time-id' });
-    }
-    
+    const auth = getAdminAuth();
     if (!auth) {
       return NextResponse.json(
         { error: 'Firebase Admin is not initialized' },
@@ -103,12 +106,12 @@ export async function POST(request: Request) {
 
 // Delete a search history item
 export async function DELETE(request: Request) {
+  if (isBuildPhase) {
+    return NextResponse.json({ success: true });
+  }
+  
   try {
-    // Skip actual Firebase operations during build time
-    if (process.env.NODE_ENV === 'production' && process.env.NEXT_PHASE === 'phase-production-build') {
-      return NextResponse.json({ success: true });
-    }
-    
+    const auth = getAdminAuth();
     if (!auth) {
       return NextResponse.json(
         { error: 'Firebase Admin is not initialized' },

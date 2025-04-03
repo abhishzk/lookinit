@@ -3,35 +3,30 @@ export const runtime = 'nodejs'; // This is crucial - must be at the top
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { createOrUpdateUserSubscription } from '@/lib/db';
-import { getAuth } from 'firebase-admin/auth';
+import { getAdminAuth, getAdminDb} from '@/lib/firebase-admin';
 
-
-// Import Firebase Admin only in server context
-let adminDb; 
-if (typeof window === 'undefined') {
-  const { getFirestore } = require('firebase-admin/firestore');
-  const admin = require('firebase-admin');
-  
-  // Initialize Firebase Admin if not already initialized
-  if (!admin.apps.length) {
-    admin.initializeApp({
-      credential: admin.credential.cert({
-        projectId: process.env.FIREBASE_PROJECT_ID,
-        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-        privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-      }),
-    });
-  }
-  
-  adminDb = getFirestore();
-}
+// Check if we're in the build phase
+const isBuildPhase = process.env.NODE_ENV === 'production' && process.env.NEXT_PHASE === 'phase-production-build';
 
 const stripe = new Stripe(process.env.STRIPE_API_KEY!, {
   apiVersion: '2025-02-24.acacia',
 });
 
 export async function POST(request: Request) {
+  // Skip during build phase
+  if (isBuildPhase) {
+    return NextResponse.json({ status: 'ok' });
+  }
+  
   try {
+    const auth = getAdminAuth();
+    if (!auth) {
+      return NextResponse.json(
+        { error: 'Firebase Admin is not initialized' },
+        { status: 500 }
+      );
+    }
+    
     const { sessionId } = await request.json();
     
     if (!sessionId) {
