@@ -12,3 +12,4 @@ node_modules
 .idea
 docker-compose.yml
 color.txt
+serviceAccountKey.json
