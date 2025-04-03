@@ -2,24 +2,32 @@ import { getApps, initializeApp, cert, App } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
 
-// Prevent multiple initializations in development due to hot reloading
-let adminApp: App;
+// Check if we're in the build phase
+const isBuildPhase = process.env.NODE_ENV === 'production' && process.env.NEXT_PHASE === 'phase-production-build';
 
-if (!getApps().length) {
+// Prevent multiple initializations
+let adminApp: App | undefined;
+let adminDb: ReturnType<typeof getFirestore> | undefined;
+let adminAuth: ReturnType<typeof getAuth> | undefined;
+
+// Only initialize Firebase Admin if we're not in the build phase
+if (!isBuildPhase && !getApps().length) {
   try {
-    // Check if we're using the split key approach
+    // Get the project ID and client email
+    const projectId = process.env.FIREBASE_PROJECT_ID;
+    const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+    
+    // Get the private key - either from split parts or a single variable
     let privateKey: string;
     
-    if (process.env.FIREBASE_ADMIN_PRIVATE_KEY_PART1 && process.env.FIREBASE_ADMIN_PRIVATE_KEY_PART2) {
-      // Combine the private key parts
-      const privateKeyPart1 = process.env.FIREBASE_ADMIN_PRIVATE_KEY_PART1;
-      const privateKeyPart2 = process.env.FIREBASE_ADMIN_PRIVATE_KEY_PART2;
-      privateKey = `${privateKeyPart1}${privateKeyPart2}`;
+    if (process.env.FIREBASE_PRIVATE_KEY_PART1 && process.env.FIREBASE_PRIVATE_KEY_PART2) {
+      // Combine the two parts of the private key
+      privateKey = process.env.FIREBASE_PRIVATE_KEY_PART1 + process.env.FIREBASE_PRIVATE_KEY_PART2;
       console.log("Using split private key approach");
     } else if (process.env.FIREBASE_PRIVATE_KEY) {
-      // Use the original single private key
+      // Use the single private key if available
       privateKey = process.env.FIREBASE_PRIVATE_KEY;
-      console.log("Using original private key approach");
+      console.log("Using single private key approach");
     } else {
       throw new Error("No Firebase private key found in environment variables");
     }
@@ -27,31 +35,36 @@ if (!getApps().length) {
     // Replace escaped newlines with actual newlines
     privateKey = privateKey.replace(/\\n/g, '\n');
     
-    // Log key information for debugging (be careful not to log the actual key in production)
-    console.log("Private key length:", privateKey.length);
-    console.log("Private key starts with:", privateKey.substring(0, 27));
-    console.log("Private key ends with:", privateKey.substring(privateKey.length - 25));
-    
-    // Initialize the app with the credential
+    // Initialize Firebase Admin
     adminApp = initializeApp({
       credential: cert({
-        projectId: process.env.FIREBASE_PROJECT_ID,
-        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-        privateKey: privateKey,
+        projectId,
+        clientEmail,
+        privateKey,
       }),
     });
+    
+    adminDb = getFirestore(adminApp);
+    adminAuth = getAuth(adminApp);
     
     console.log("Firebase Admin initialized successfully");
   } catch (error) {
     console.error("Error initializing Firebase Admin:", error);
-    throw error; // Re-throw to make sure the app doesn't start with invalid Firebase config
+    // Don't throw during build
   }
-} else {
+} else if (getApps().length > 0) {
   adminApp = getApps()[0];
-  console.log("Using existing Firebase Admin app");
+  adminDb = getFirestore(adminApp);
+  adminAuth = getAuth(adminApp);
 }
 
-const adminDb = getFirestore();
-const auth = getAuth();
+// Safe getters that handle build phase
+export function getAdminDb() {
+  if (isBuildPhase) return undefined;
+  return adminDb;
+}
 
-export { adminDb, auth };
+export function getAdminAuth() {
+  if (isBuildPhase) return undefined;
+  return adminAuth;
+}

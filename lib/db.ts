@@ -1,22 +1,23 @@
-export const runtime = "nodejs";
+import { getAdminDb } from './firebase-admin';
 
-import { initializeApp, getApps, cert } from 'firebase-admin/app';
-import { getFirestore } from 'firebase-admin/firestore';
-import { adminDb as firebaseDb } from './firebase-admin';
-import { DocumentReference, CollectionReference } from 'firebase-admin/firestore';
+// Remove the runtime declaration - this belongs in route files, not library files
+// export const runtime = "nodejs";
 
-// Initialize Firebase Admin if it hasn't been initialized
-if (!getApps().length) {
-  initializeApp({
-    credential: cert({
-      projectId: process.env.FIREBASE_ADMIN_PROJECT_ID,
-      clientEmail: process.env.FIREBASE_ADMIN_CLIENT_EMAIL,
-      privateKey: process.env.FIREBASE_ADMIN_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-    }),
-  });
-}
+// Remove the Firebase initialization code
+// import { initializeApp, getApps, cert } from 'firebase-admin/app';
+// import { getFirestore } from 'firebase-admin/firestore';
 
-const db = getFirestore();
+// Remove this initialization
+// if (!getApps().length) {
+//   initializeApp({
+//     credential: cert({
+//       projectId: process.env.FIREBASE_PROJECT_ID,
+//       clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+//       privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+//     }),
+//   });
+// }
+// const db = getFirestore();
 
 export interface UserSubscription {
   userId: string;
@@ -29,38 +30,16 @@ export interface UserSubscription {
   updatedAt: number;
 }
 
-// export async function createOrUpdateUserSubscription(data: UserSubscription): Promise<void> {
-//   await db.collection('subscriptions').doc(data.userId).set(data, { merge: true });
-// }
-// Use dynamic imports for server-only modules
 export async function createOrUpdateUserSubscription(data: any) {
   try {
-    // Only import and use Firebase Admin in a server context
-    if (typeof window === 'undefined') {
-      const admin = require('firebase-admin');
-      const { getFirestore } = require('firebase-admin/firestore');
-      
-      // Initialize Firebase Admin if not already initialized
-      if (!admin.apps.length) {
-        admin.initializeApp({
-          credential: admin.credential.cert({
-            projectId: process.env.FIREBASE_PROJECT_ID,
-            clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-            privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-          }),
-        });
-      }
-      
-      const db = getFirestore();
-      const userRef = db.collection('users').doc(data.userId);
-      const subscriptionRef = userRef.collection('subscriptions').doc(data.subscriptionId);
-      
-      await subscriptionRef.set(data, { merge: true });
-      return true;
-    } else {
-      console.error('Attempted to use server-only function in client context');
-      return false;
-    }
+    const db = getAdminDb();
+    if (!db) return false;
+    
+    const userRef = db.collection('users').doc(data.userId);
+    const subscriptionRef = userRef.collection('subscriptions').doc(data.subscriptionId);
+    
+    await subscriptionRef.set(data, { merge: true });
+    return true;
   } catch (error) {
     console.error('Error updating subscription:', error);
     return false;
@@ -68,6 +47,9 @@ export async function createOrUpdateUserSubscription(data: any) {
 }
 
 export async function getUserSubscription(userId: string): Promise<UserSubscription | null> {
+  const db = getAdminDb();
+  if (!db) return null;
+  
   const doc = await db.collection('subscriptions').doc(userId).get();
   if (!doc.exists) {
     return null;
@@ -90,6 +72,9 @@ export async function updateUserSubscriptionStatus(
   status: string, 
   currentPeriodEnd?: number
 ): Promise<void> {
+  const db = getAdminDb();
+  if (!db) return;
+  
   const data: Partial<UserSubscription> = {
     status,
     updatedAt: Date.now(),
@@ -110,6 +95,7 @@ export interface SearchHistoryItem {
 }
 
 export async function saveSearchToHistory(userId: string, query: string): Promise<string> {
+  const db = getAdminDb();
   if (!db) throw new Error('Firestore is not initialized');
 
   const historyRef = db.collection('searchHistory').doc();
@@ -127,28 +113,31 @@ export async function saveSearchToHistory(userId: string, query: string): Promis
 }
 
 export async function getUserSearchHistory(userId: string, limit = 20): Promise<SearchHistoryItem[]> {
-if (!db) throw new Error('Firestore is not initialized');
+  const db = getAdminDb();
+  if (!db) return [];
 
-    const snapshot = await db.collection('searchHistory')
+  const snapshot = await db.collection('searchHistory')
     .where('userId', '==', userId)
     .orderBy('timestamp', 'desc')
     .limit(limit)
     .get();
     
-    return snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      } as SearchHistoryItem));
-    }
+  return snapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data()
+  } as SearchHistoryItem));
+}
 
 export async function deleteSearchHistoryItem(id: string): Promise<void> {
-    if (!db) throw new Error('Firestore is not initialized');
-  
-    await db.collection('searchHistory').doc(id).delete();
+  const db = getAdminDb();
+  if (!db) return;
+
+  await db.collection('searchHistory').doc(id).delete();
 }
 
 export async function clearUserSearchHistory(userId: string): Promise<void> {
-  if (!db) throw new Error('Firestore is not initialized');
+  const db = getAdminDb();
+  if (!db) return;
 
   const snapshot = await db.collection('searchHistory')
     .where('userId', '==', userId)

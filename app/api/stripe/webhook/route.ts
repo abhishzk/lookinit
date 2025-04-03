@@ -2,15 +2,24 @@ export const runtime = "nodejs";
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { updateUserSubscriptionStatus } from '@/lib/db';
+import { getAdminAuth, getAdminDb } from '@/lib/firebase-admin';
 
-const stripe = new Stripe(process.env.STRIPE_API_KEY!, {
+// Check if we're in the build phase
+const isBuildPhase = process.env.NODE_ENV === 'production' && process.env.NEXT_PHASE === 'phase-production-build';
+
+const stripe = new Stripe(process.env.STRIPE_API_KEY || 'dummy_key', {
   apiVersion: '2025-02-24.acacia',
 });
 
 // This is your Stripe webhook secret for testing your endpoint locally.
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
+const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || 'dummy_secret';
 
 export async function POST(request: Request) {
+  // Skip during build phase
+  if (isBuildPhase) {
+    return NextResponse.json({ received: true });
+  }
+  
   const payload = await request.text();
   const signature = request.headers.get('stripe-signature') as string;
 
