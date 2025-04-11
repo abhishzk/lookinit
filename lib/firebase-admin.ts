@@ -59,60 +59,53 @@ let adminApp: App | undefined;
 let adminDb: ReturnType<typeof getFirestore> | undefined;
 let adminAuth: ReturnType<typeof getAuth> | undefined;
 
-// Modified function to get Firebase service account with better error handling and fallbacks
-async function getFirebaseServiceAccount() {
-  // First try: Direct environment variable
-  if (process.env.FIREBASE_SERVICE_ACCOUNT) {
-    try {
-      console.log('Using Firebase service account from environment variable');
-      return JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-    } catch (error) {
-      console.error('Error parsing Firebase service account from environment variable:', error);
-      // Continue to next method if this fails
+// Function to get the Firebase service account from Secret Manager
+async function getFirebaseServiceAccountFromSecretManager() {
+  try {
+    const client = new SecretManagerServiceClient();
+    const name = `projects/${process.env.GOOGLE_CLOUD_PROJECT}/secrets/firebase-service-account/versions/latest`;
+    
+    const [version] = await client.accessSecretVersion({ name });
+    const payload = version.payload?.data?.toString() || '{}';
+    
+    // Log the first few characters to diagnose the issue
+    console.log('Secret payload first 20 chars:', payload.substring(0, 20));
+    
+    // Try to extract valid JSON if there are extra characters
+    let jsonMatch = payload.match(/({.*})/);
+    if (jsonMatch && jsonMatch[1]) {
+      console.log('Extracted JSON object from payload');
+      return JSON.parse(jsonMatch[1]);
     }
-  }
-  
-  // Second try: Secret Manager
-  if (process.env.GOOGLE_CLOUD_PROJECT) {
+    
+    // If no JSON object found, try to clean the payload
+    // Remove any BOM or extra characters
+    const cleanPayload = payload
+      .replace(/^\uFEFF/, '')  // Remove BOM if present
+      .trim();                 // Remove whitespace
+    
+    // Try to parse the cleaned payload
     try {
-      console.log('Attempting to fetch Firebase service account from Secret Manager');
-      const client = new SecretManagerServiceClient();
-      const name = `projects/${process.env.GOOGLE_CLOUD_PROJECT}/secrets/firebase-service-account/versions/latest`;
+      return JSON.parse(cleanPayload);
+    } catch (parseError) {
+      console.error('Error parsing cleaned payload:', parseError);
       
-      const [version] = await client.accessSecretVersion({ name });
-      const payload = version.payload?.data?.toString() || '{}';
+      // Last attempt: try to find the first '{' and last '}'
+      const startIdx = cleanPayload.indexOf('{');
+      const endIdx = cleanPayload.lastIndexOf('}');
       
-      return JSON.parse(payload);
-    } catch (error) {
-      console.error('Error fetching Firebase service account from Secret Manager:', error);
-      // Continue to next method if this fails
+      if (startIdx >= 0 && endIdx > startIdx) {
+        const extractedJson = cleanPayload.substring(startIdx, endIdx + 1);
+        console.log('Extracted JSON using indices, length:', extractedJson.length);
+        return JSON.parse(extractedJson);
+      }
+      
+      throw parseError;
     }
+  } catch (error) {
+    console.error('Error fetching Firebase service account from Secret Manager:', error);
+    throw error;
   }
-  
-  // Third try: Individual environment variables
-  if (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY) {
-    try {
-      console.log('Using Firebase service account from individual environment variables');
-      return {
-        type: 'service_account',
-        project_id: process.env.FIREBASE_PROJECT_ID,
-        private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID || undefined,
-        private_key: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
-        client_email: process.env.FIREBASE_CLIENT_EMAIL,
-        client_id: process.env.FIREBASE_CLIENT_ID || undefined,
-        auth_uri: "https://accounts.google.com/o/oauth2/auth",
-        token_uri: "https://oauth2.googleapis.com/token",
-        auth_provider_x509_cert_url: "https://www.googleapis.com/oauth2/v1/certs",
-        client_x509_cert_url: process.env.FIREBASE_CLIENT_X509_CERT_URL || undefined
-      };
-    } catch (error) {
-      console.error('Error creating Firebase service account from individual environment variables:', error);
-      // Continue to next method if this fails
-    }
-  }
-  
-  // If all methods fail, throw an error
-  throw new Error('Could not obtain Firebase service account credentials from any source');
 }
 
 // Initialize Firebase Admin
@@ -127,11 +120,48 @@ async function initializeFirebaseAdmin() {
   }
   
   try {
-    // Set up Google credentials first
-    setupGoogleCredentials();
+    let serviceAccount;
     
-    // Get the service account using the modified function with fallbacks
-    const serviceAccount = await getFirebaseServiceAccount();
+    // First try to use direct environment variable
+    if (process.env.FIREBASE_SERVICE_ACCOUNT_JSON) {
+      try {
+        serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON);
+        console.log("Using Firebase service account from environment variable");
+      } catch (error) {
+        console.error("Error parsing Firebase service account JSON:", error);
+      }
+    }
+    
+    // If that fails, try Secret Manager
+    if (!serviceAccount) {
+      try {
+        serviceAccount = await getFirebaseServiceAccountFromSecretManager();
+        console.log("Using Firebase service account from Secret Manager");
+      } catch (error) {
+        console.error("Error getting Firebase service account from Secret Manager:", error);
+      }
+    }
+    
+    // If we still don't have a service account, try individual credential fields
+    if (!serviceAccount && process.env.GOOGLE_CREDS_TYPE && process.env.GOOGLE_CREDS_PRIVATE_KEY) {
+      serviceAccount = {
+        type: process.env.GOOGLE_CREDS_TYPE,
+        project_id: process.env.GOOGLE_CREDS_PROJECT_ID,
+        private_key_id: process.env.GOOGLE_CREDS_PRIVATE_KEY_ID,
+        private_key: process.env.GOOGLE_CREDS_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+        client_email: process.env.GOOGLE_CREDS_CLIENT_EMAIL,
+        client_id: process.env.GOOGLE_CREDS_CLIENT_ID,
+        auth_uri: process.env.GOOGLE_CREDS_AUTH_URI || "https://accounts.google.com/o/oauth2/auth",
+        token_uri: process.env.GOOGLE_CREDS_TOKEN_URI || "https://oauth2.googleapis.com/token",
+        auth_provider_x509_cert_url: process.env.GOOGLE_CREDS_AUTH_PROVIDER_X509_CERT_URL || "https://www.googleapis.com/oauth2/v1/certs",
+        client_x509_cert_url: process.env.GOOGLE_CREDS_CLIENT_X509_CERT_URL
+      };
+      console.log("Using Firebase service account from individual environment variables");
+    }
+    
+    if (!serviceAccount) {
+      throw new Error("Could not obtain Firebase service account credentials");
+    }
     
     // Initialize Firebase Admin with the service account
     adminApp = initializeApp({
@@ -144,18 +174,6 @@ async function initializeFirebaseAdmin() {
     console.log("Firebase Admin initialized successfully");
   } catch (error) {
     console.error("Error initializing Firebase Admin:", error);
-    
-    // Last resort: try application default credentials
-    try {
-      console.log("Attempting to initialize with application default credentials");
-      adminApp = initializeApp();
-      adminDb = getFirestore(adminApp);
-      adminAuth = getAuth(adminApp);
-      console.log("Firebase Admin initialized with application default credentials");
-    } catch (fallbackError) {
-      console.error("Failed to initialize with application default credentials:", fallbackError);
-      throw new Error("Could not initialize Firebase Admin with any available method");
-    }
   }
 }
 
@@ -168,11 +186,21 @@ if (!isBuildPhase && !getApps().length) {
 export async function getAdminDb() {
   if (isBuildPhase) return undefined;
   
-  if (!adminDb && !getApps().length) {
-    await initializeFirebaseAdmin();
+  try {
+    if (!adminDb && !getApps().length) {
+      console.log("Initializing Firebase Admin...");
+      await initializeFirebaseAdmin();
+    }
+    
+    if (!adminDb) {
+      console.error("Firebase Admin DB is still undefined after initialization");
+    }
+    
+    return adminDb;
+  } catch (error) {
+    console.error("Error in getAdminDb:", error);
+    return undefined;
   }
-  
-  return adminDb;
 }
 
 export async function getAdminAuth() {
@@ -184,3 +212,27 @@ export async function getAdminAuth() {
   
   return adminAuth;
 }
+async function getFirebaseServiceAccount() {
+  try {
+    // Attempt to fetch the service account from Secret Manager
+    const serviceAccount = await getFirebaseServiceAccountFromSecretManager();
+    if (serviceAccount) {
+      return serviceAccount;
+    }
+  } catch (error) {
+    console.error('Error fetching service account from Secret Manager:', error);
+  }
+
+  // Fallback to environment variables if Secret Manager fails
+  if (process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON) {
+    try {
+      return JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON);
+    } catch (error) {
+      console.error('Error parsing GOOGLE_APPLICATION_CREDENTIALS_JSON:', error);
+    }
+  }
+
+  // If no valid service account is found, throw an error
+  throw new Error('Unable to retrieve Firebase service account credentials.');
+}
+

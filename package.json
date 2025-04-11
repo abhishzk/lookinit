@@ -29,6 +29,7 @@
     "@spotify/web-api-ts-sdk": "^1.2.0",
     "@stripe/stripe-js": "^6.1.0",
     "@supabase/supabase-js": "^2.49.4",
+    "@tabler/icons-react": "^3.31.0",
     "@types/jsdom": "^21.1.7",
     "@types/leaflet": "^1.9.8",
     "@types/turndown": "^5.0.5",

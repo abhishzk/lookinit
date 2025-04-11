@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { SearchHistory } from '@/components/SearchHistory';
+// Change from named import to default import
+import SearchHistory from '@/components/SearchHistory';
 import { Clock } from '@phosphor-icons/react';
 import { auth, googleProvider } from '@/lib/firebase';
 import { signInWithPopup, User } from 'firebase/auth';
@@ -10,7 +11,8 @@ import { Sidebar as SidebarIcon, NotePencil, X, PersonSimple, GoogleLogo, UserCi
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import Link from 'next/link';
-
+// Import Tabler icons correctly
+import { IconRefresh, IconTrash } from '@tabler/icons-react';
 
 export function Header() {
   const [showHistory, setShowHistory] = useState(false);
@@ -26,6 +28,7 @@ export function Header() {
 
     return () => unsubscribe();
   }, []);
+  
   // Add this function to handle selecting a query from history
   const handleSelectHistoryQuery = (query: string) => {
     // You'll need to implement this to set the query in the main search input
@@ -119,6 +122,7 @@ export function Header() {
         </button>
         {showHistory && (
           <div className="mt-4 border-t border-gray-200 dark:border-gray-700 pt-4">
+            {/* Pass the onSelectQuery prop to SearchHistory */}
             <SearchHistory onSelectQuery={handleSelectHistoryQuery} />
           </div>
         )}
@@ -171,7 +175,7 @@ export function Header() {
                   <DropdownMenu.Item className="p-2 hover:dark:bg-[#3b3e41] hover:bg-gray-300 rounded-md cursor-pointer">
                     <Link href="/pro" className="flex items-center gap-2 text-black dark:text-white w-full">
                       <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 256 256">
-                        <path d="M172,36H84A48.05,48.05,0,0,0,36,84v88a48.05,48.05,0,0,0,48,48h88a48.05,48.05,0,0,0,48-48V84A48.05,48.05,0,0,0,172,36ZM84,60h88a24,24,0,0,1,24,24v4H60V84A24,24,0,0,1,84,60ZM172,196H84a24,24,0,0,1-24-24V112H196v60A24,24,0,0,1,172,196Z"></path>
+                      <path d="M172,36H84A48.05,48.05,0,0,0,36,84v88a48.05,48.05,0,0,0,48,48h88a48.05,48.05,0,0,0,48-48V84A48.05,48.05,0,0,0,172,36ZM84,60h88a24,24,0,0,1,24,24v4H60V84A24,24,0,0,1,84,60ZM172,196H84a24,24,0,0,1-24-24V112H196v60A24,24,0,0,1,172,196Z"></path>
                       </svg>
                       Upgrade to Pro
                     </Link>
@@ -200,4 +204,3 @@ export function Header() {
     </>
   );
 }
-

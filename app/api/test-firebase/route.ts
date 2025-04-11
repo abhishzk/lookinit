@@ -22,7 +22,8 @@ export async function GET() {
     console.error('Firebase test error:', error);
     return NextResponse.json({ 
       status: 'error', 
-      message: error instanceof Error ? error.message : 'Unknown error' 
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined
     }, { status: 500 });
   }
 }
