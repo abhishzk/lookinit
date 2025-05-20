@@ -8,15 +8,8 @@ interface SearchHistoryProps {
   onSelectQuery?: (query: string) => void;
 }
 
-// Add interface for history item
-interface HistoryItem {
-  id: string;
-  query: string;
-  timestamp: number;
-  // Add other properties as needed
-}
-
-export default function SearchHistory({ onSelectQuery }: SearchHistoryProps) {
+// Change to named export to match the import in header.tsx
+export function SearchHistory({ onSelectQuery }: SearchHistoryProps) {
   const { history, loading, error, refreshHistory, deleteHistoryItem, clearAllHistory } = useSearchHistory();
   const { user } = useAuth();
   const [isDeleting, setIsDeleting] = useState(false);
@@ -63,8 +56,6 @@ export default function SearchHistory({ onSelectQuery }: SearchHistoryProps) {
     await deleteHistoryItem(id);
     setIsDeleting(false);
   };
-
-  
 
   return (
     <div className="mt-4 bg-white dark:bg-[#282a2c] shadow-lg rounded-lg p-4">
@@ -123,3 +114,6 @@ export default function SearchHistory({ onSelectQuery }: SearchHistoryProps) {
     </div>
   );
 }
+
+// Add default export as well for backward compatibility
+export default SearchHistory;
