@@ -1,58 +1,62 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSearchHistory } from '../lib/hooks/useSearchHistory';
-import { auth } from '../lib/firebase';
+import { useAuth } from '../lib/hooks/useAuth';
 
 export default function SearchBar() {
   const [query, setQuery] = useState('');
-  const [isSearching, setIsSearching] = useState(false);
   const { saveSearch } = useSearchHistory();
+  const { user } = useAuth();
+
+  // Listen for events to set the search query (from history selection)
+  useEffect(() => {
+    const handleSetSearchQuery = (event: CustomEvent) => {
+      if (event.detail && event.detail.query) {
+        setQuery(event.detail.query);
+      }
+    };
+
+    window.addEventListener('set-search-query', handleSetSearchQuery as EventListener);
+    
+    return () => {
+      window.removeEventListener('set-search-query', handleSetSearchQuery as EventListener);
+    };
+  }, []);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!query.trim()) return;
     
-    setIsSearching(true);
-    
     try {
       // Perform your search logic here
-      // Example: Fetch search results from an API
+      // For example:
       const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
-      const results = await response.json();
+      const data = await response.json();
       
       // Save the search query to history if user is logged in
-      if (auth.currentUser) {
-        await saveSearch(query, results);
+      if (user) {
+        await saveSearch(query, data.results);
       }
       
-      // Handle the search results (e.g., update state, navigate to results page)
+      // Handle search results (e.g., update state, display results)
       // ...
-      
     } catch (error) {
       console.error('Search error:', error);
-    } finally {
-      setIsSearching(false);
     }
   };
 
   return (
-    <form onSubmit={handleSearch} className="w-full max-w-md mx-auto">
-      <div className="flex items-center border rounded-lg overflow-hidden shadow-sm">
-        <input
-          type="text"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search..."
-          className="w-full px-4 py-2 focus:outline-none dark:bg-[#282a2c] dark:text-white"
-        />
-        <button 
-          type="submit" 
-          className="bg-blue-500 text-white px-4 py-2 hover:bg-blue-600 transition-colors"
-          disabled={isSearching}
-        >
-          {isSearching ? 'Searching...' : 'Search'}
-        </button>
-      </div>
+    <form onSubmit={handleSearch}>
+      <input
+        type="text"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder="Search..."
+        className="border p-2 rounded"
+      />
+      <button type="submit" className="bg-blue-500 text-white p-2 rounded ml-2">
+        Search
+      </button>
     </form>
   );
 }
