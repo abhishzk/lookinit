@@ -121,7 +121,7 @@ const PaymentPrompt = () => {
       </div>
       
       <div className="text-center mt-4">
-        <a href="/enterprise-inquiry" className="text-blue-600 dark:text-blue-400 hover:underline">
+        <a href="/enterprise" className="text-blue-600 dark:text-blue-400 hover:underline">
           Need enterprise options? Contact us
         </a>
       </div>
