@@ -1,189 +1,119 @@
-'use client';
+import { useState } from 'react';
+import { useSearchHistory } from '../lib/hooks/useSearchHistory';
+import { useAuth } from '../lib/hooks/useAuth';
+import { IconRefresh, IconTrash } from '@tabler/icons-react';
 
-import { useState, useEffect } from 'react';
-import { auth } from '@/lib/firebase';
-import { SearchHistoryItem } from '@/lib/db';
-import { 
-  fetchSearchHistory, 
-  deleteSearchItem, 
-  clearSearchHistory 
-} from '@/lib/search-history-service';
-import { Clock, Trash, ArrowRight } from '@phosphor-icons/react';
-import { Button } from '@/components/ui/button';
-import { useToast } from '@/components/ui/use-toast';
-import { Skeleton } from '@/components/ui/skeleton';
-
+// Add proper TypeScript interface for props
 interface SearchHistoryProps {
-  onSelectQuery: (query: string) => void;
-  onClose?: () => void;
+  onSelectQuery?: (query: string) => void;
 }
 
-export function SearchHistory({ onSelectQuery, onClose }: SearchHistoryProps) {
-  const [history, setHistory] = useState<SearchHistoryItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
+// Change to named export to match the import in header.tsx
+export function SearchHistory({ onSelectQuery }: SearchHistoryProps) {
+  const { history, loading, error, refreshHistory, deleteHistoryItem, clearAllHistory } = useSearchHistory();
+  const { user } = useAuth();
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  useEffect(() => {
-    const fetchHistory = async () => {
-      const user = auth.currentUser;
-      if (!user) {
-        setHistory([]);
-        setLoading(false);
-        return;
-      }
-
-      try {
-        const historyItems = await fetchSearchHistory();
-        setHistory(historyItems);
-      } catch (error) {
-        console.error('Error fetching search history:', error);
-        toast({
-          title: 'Error',
-          description: 'Failed to load search history',
-          variant: 'destructive',
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchHistory();
-    
-    // Set up auth state listener to refresh history when user logs in/out
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      if (user) {
-        fetchHistory();
-      } else {
-        setHistory([]);
-        setLoading(false);
-      }
-    });
-
-    return () => unsubscribe();
-  }, [toast]);
-
-  const handleDeleteItem = async (id: string, e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent triggering the parent click
-    
-    try {
-      await deleteSearchItem(id);
-      setHistory(history.filter(item => item.id !== id));
-      toast({
-        title: 'Deleted',
-        description: 'Search history item removed',
-      });
-    } catch (error) {
-      console.error('Error deleting history item:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to delete history item',
-        variant: 'destructive',
-      });
-    }
-  };
-
-  const handleClearHistory = async () => {
-    try {
-      await clearSearchHistory();
-      setHistory([]);
-      toast({
-        title: 'Cleared',
-        description: 'Search history has been cleared',
-      });
-    } catch (error) {
-      console.error('Error clearing history:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to clear search history',
-        variant: 'destructive',
-      });
-    }
-  };
-
-  const handleSelectQuery = (query: string) => {
-    onSelectQuery(query);
-    if (onClose) onClose();
-  };
+  if (!user) {
+    return (
+      <div className="mt-4 p-4 bg-gray-100 dark:bg-[#282a2c] rounded-lg">
+        <p className="text-center text-gray-500 dark:text-gray-400">
+          Please sign in to view your search history
+        </p>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
-      <div className="p-4">
-        <div className="flex items-center mb-4">
-          <Clock size={20} className="mr-2 text-gray-500" />
-          <h3 className="text-lg font-medium">Search History</h3>
+      <div className="mt-4 p-4 bg-white dark:bg-[#282a2c] shadow-lg rounded-lg">
+        <div className="flex items-center justify-center">
+          <div className="w-6 h-6 border-2 border-t-blue-500 border-r-transparent border-b-transparent border-l-transparent rounded-full animate-spin"></div>
+          <p className="ml-2">Loading search history...</p>
         </div>
-        {[1, 2, 3].map((i) => (
-          <div key={i} className="mb-2">
-            <Skeleton className="h-10 w-full" />
-          </div>
-        ))}
       </div>
     );
   }
 
-  if (history.length === 0) {
+  if (error) {
     return (
-      <div className="p-4">
-        <div className="flex items-center mb-4">
-          <Clock size={20} className="mr-2 text-gray-500" />
-          <h3 className="text-lg font-medium">Search History</h3>
-        </div>
-        <p className="text-gray-500 text-center py-4">No search history found</p>
+      <div className="mt-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+        <p className="text-red-600 dark:text-red-400">Error: {error}</p>
       </div>
     );
   }
+
+  const handleClearAll = async () => {
+    if (window.confirm('Are you sure you want to clear all your search history?')) {
+      setIsDeleting(true);
+      await clearAllHistory();
+      setIsDeleting(false);
+    }
+  };
+
+  const handleDeleteItem = async (id: string) => {
+    setIsDeleting(true);
+    await deleteHistoryItem(id);
+    setIsDeleting(false);
+  };
 
   return (
-    <div className="p-4">
+    <div className="mt-4 bg-white dark:bg-[#282a2c] shadow-lg rounded-lg p-4">
       <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center">
-          <Clock size={20} className="mr-2 text-gray-500" />
-          <h3 className="text-lg font-medium">Search History</h3>
+        <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Your Search History</h2>
+        <div className="flex space-x-2">
+          <button 
+            onClick={refreshHistory}
+            className="p-2 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-full"
+            title="Refresh history"
+            disabled={loading || isDeleting}
+          >
+            <IconRefresh className="w-5 h-5" />
+          </button>
+          {history.length > 0 && (
+            <button 
+              onClick={handleClearAll}
+              className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full"
+              title="Clear all history"
+              disabled={loading || isDeleting}
+            >
+              <IconTrash className="w-5 h-5" />
+            </button>
+          )}
         </div>
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          onClick={handleClearHistory}
-          className="text-red-500 hover:text-red-700 hover:bg-red-100 dark:hover:bg-red-900/20"
-        >
-          <Trash size={16} className="mr-1" />
-          Clear All
-        </Button>
       </div>
       
-      <div className="space-y-2">
-        {history.map((item) => (
-          <div 
-            key={item.id}
-            onClick={() => handleSelectQuery(item.query)}
-            className="flex items-center justify-between p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer group"
-          >
-            <div className="flex-1 truncate">
-              <p className="truncate">{item.query}</p>
-              <p className="text-xs text-gray-500">
-                {new Date(item.timestamp).toLocaleDateString()} {new Date(item.timestamp).toLocaleTimeString()}
-              </p>
-            </div>
-            <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="h-8 w-8"
-                onClick={(e) => handleDeleteItem(item.id, e)}
+      {history.length === 0 ? (
+        <p className="text-center py-4 text-gray-500 dark:text-gray-400">No search history found</p>
+      ) : (
+        <ul className="divide-y divide-gray-200 dark:divide-gray-700">
+          {history.map((item) => (
+            <li key={item.id} className="py-3 flex items-center justify-between">
+              {/* Add onClick handler to use the query */}
+              <div 
+                className="cursor-pointer hover:text-blue-500 dark:hover:text-blue-400"
+                onClick={() => onSelectQuery && onSelectQuery(item.query)}
               >
-                <Trash size={16} className="text-red-500" />
-              </Button>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="h-8 w-8"
+                <p className="font-medium text-gray-900 dark:text-gray-100">{item.query}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  {new Date(item.timestamp).toLocaleString()}
+                </p>
+              </div>
+              <button
+                onClick={() => handleDeleteItem(item.id)}
+                className="p-1.5 text-gray-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full"
+                title="Delete this item"
+                disabled={isDeleting}
               >
-                <ArrowRight size={16} />
-              </Button>
-            </div>
-          </div>
-        ))}
-      </div>
+                <IconTrash className="w-4 h-4" />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
+
+// Add default export as well for backward compatibility
+export default SearchHistory;

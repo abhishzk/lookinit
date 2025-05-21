@@ -165,3 +165,10 @@ export async function clearUserSearchHistory(userId: string): Promise<void> {
     console.error('Error clearing user search history:', error);
   }
 }
+
+export interface UserSearchHistory {
+  userId: string;
+  query: string;
+  timestamp: number;
+  results?: any; // Optional: store search results
+}
