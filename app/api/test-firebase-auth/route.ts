@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { getAdminAuth, getAdminDb } from '../../../lib/firebase-admin';
 
+// Specify Node.js runtime
+export const runtime = 'nodejs';
+
 export async function GET() {
   try {
     console.log('Testing Firebase Admin initialization...');
