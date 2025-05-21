@@ -287,7 +287,7 @@ export default function ProPage() {
             </div>
             <div className="bg-white dark:bg-[#282a2c] rounded-lg shadow p-6">
               <h3 className="text-lg font-semibold mb-2">Do you offer enterprise plans?</h3>
-              <p>Yes, we offer custom enterprise plans for organizations with specific needs. Please <a href="/enterprise-inquiry" className="text-blue-600 dark:text-blue-400 hover:underline">contact us</a> for more information.</p>
+              <p>Yes, we offer custom enterprise plans for organizations with specific needs. Please <a href="/enterprise" className="text-blue-600 dark:text-blue-400 hover:underline">contact us</a> for more information.</p>
             </div>
           </div>
         </div>
