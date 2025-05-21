@@ -13,3 +13,4 @@ node_modules
 docker-compose.yml
 color.txt
 firebase-service-account.json
+firebase-env-vars.txt
