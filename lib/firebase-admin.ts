@@ -1,10 +1,11 @@
-import { initializeApp, getApps, cert } from 'firebase-admin/app';
-import { getAuth } from 'firebase-admin/auth';
-import { getFirestore } from 'firebase-admin/firestore';
+import { initializeApp, getApps, cert, App } from 'firebase-admin/app';
+import { getAuth, Auth } from 'firebase-admin/auth';
+import { getFirestore, Firestore } from 'firebase-admin/firestore';
 import { SecretManagerServiceClient } from '@google-cloud/secret-manager';
 
-let adminAuth: ReturnType<typeof getAuth> | undefined;
-let adminDb: ReturnType<typeof getFirestore> | undefined;
+let adminApp: App | undefined;
+let adminAuth: Auth | undefined;
+let adminDb: Firestore | undefined;
 
 async function getSecretFromSecretManager(secretName: string): Promise<string> {
   try {
@@ -31,49 +32,76 @@ export async function initializeFirebaseAdmin() {
 
   try {
     // Check if Firebase Admin is already initialized
-    if (getApps().length === 0) {
-      // Get individual credentials from Secret Manager
-      try {
-        const projectId = await getSecretFromSecretManager('firebase-project-id');
-        const clientEmail = await getSecretFromSecretManager('firebase-client-email');
-        const privateKey = await getSecretFromSecretManager('firebase-private-key');
+    if (!adminApp && getApps().length === 0) {
+      const isNetlify = process.env.APP_ENVIRONMENT === 'netlify';
+      console.log(`Running in ${isNetlify ? 'Netlify' : 'local'} environment`);
+
+      if (isNetlify) {
+        // On Netlify, use a simplified approach with just the essential credentials
+        if (!process.env.APP_FIREBASE_PROJECT_ID || !process.env.APP_FIREBASE_API_KEY) {
+          throw new Error('Missing required Firebase environment variables for Netlify');
+        }
+
+        console.log('Initializing Firebase Admin on Netlify with minimal credentials');
         
-        console.log('Successfully retrieved Firebase credentials from Secret Manager');
-        
-        // Initialize Firebase Admin with the individual credentials
-        initializeApp({
-          credential: cert({
+        // Initialize with just the project ID
+        adminApp = initializeApp({
+          projectId: process.env.APP_FIREBASE_PROJECT_ID,
+        });
+      } else {
+        // In local development, try to use Secret Manager
+        try {
+          console.log('Attempting to get Firebase credentials from Secret Manager');
+          const projectId = await getSecretFromSecretManager('firebase-project-id');
+          const clientEmail = await getSecretFromSecretManager('firebase-client-email');
+          const privateKey = await getSecretFromSecretManager('firebase-private-key');
+          
+          const credentials = {
             projectId,
             clientEmail,
             privateKey,
-          }),
-          projectId,
-        });
-      } catch (secretError) {
-        console.error('Error getting Firebase credentials from Secret Manager:', secretError);
-        
-        // Fallback to environment variables if available (for local development)
-        if (process.env.FIREBASE_PROJECT_ID && 
-            process.env.FIREBASE_CLIENT_EMAIL && 
-            process.env.FIREBASE_PRIVATE_KEY) {
-          console.log('Using Firebase credentials from environment variables');
+          };
           
-          initializeApp({
-            credential: cert({
-              projectId: process.env.FIREBASE_PROJECT_ID,
-              clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-              privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
-            }),
-            projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || process.env.FIREBASE_PROJECT_ID,
+          console.log('Successfully retrieved Firebase credentials from Secret Manager');
+          
+          // Initialize with full credentials
+          adminApp = initializeApp({
+            credential: cert(credentials),
+            projectId,
           });
-        } else {
-          throw new Error('Could not obtain Firebase credentials from any source');
+        } catch (secretError) {
+          console.error('Error getting Firebase credentials from Secret Manager:', secretError);
+          
+          // Fallback to environment variables if available
+          if (process.env.APP_FIREBASE_PROJECT_ID && 
+              process.env.APP_FIREBASE_CLIENT_EMAIL && 
+              process.env.APP_FIREBASE_PRIVATE_KEY) {
+            console.log('Using Firebase credentials from environment variables');
+            
+            adminApp = initializeApp({
+              credential: cert({
+                projectId: process.env.APP_FIREBASE_PROJECT_ID,
+                clientEmail: process.env.APP_FIREBASE_CLIENT_EMAIL,
+                // Replace escaped newlines with actual newlines
+                privateKey: process.env.APP_FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+              }),
+              projectId: process.env.APP_FIREBASE_PROJECT_ID,
+            });
+          } else {
+            throw new Error('No Firebase credentials available');
+          }
         }
       }
+      
+      console.log('Firebase Admin initialized successfully');
     }
 
-    adminAuth = getAuth();
-    adminDb = getFirestore();
+    if (!adminApp) {
+      throw new Error('Firebase Admin app not initialized');
+    }
+
+    adminAuth = getAuth(adminApp);
+    adminDb = getFirestore(adminApp);
     
     return { auth: adminAuth, db: adminDb };
   } catch (error) {
@@ -81,7 +109,6 @@ export async function initializeFirebaseAdmin() {
     throw new Error('Could not initialize Firebase Admin: ' + (error instanceof Error ? error.message : String(error)));
   }
 }
-
 export async function getAdminAuth() {
   const { auth } = await initializeFirebaseAdmin();
   return auth;
