@@ -19,14 +19,7 @@ async function getSecretFromSecretManager(secretName: string): Promise<string> {
     
     return version.payload.data.toString();
   } catch (error) {
-    console.error('Error accessing secret:', error);
-    
-    // If we're in development mode, try to use local environment variables instead
-    if (process.env.NODE_ENV === 'development' && process.env.FIREBASE_SERVICE_ACCOUNT) {
-      console.log('Using local Firebase service account from environment variables');
-      return process.env.FIREBASE_SERVICE_ACCOUNT;
-    }
-    
+    console.error(`Error accessing secret ${secretName}:`, error);
     throw new Error(`Could not access secret: ${secretName}`);
   }
 }
@@ -39,41 +32,44 @@ export async function initializeFirebaseAdmin() {
   try {
     // Check if Firebase Admin is already initialized
     if (getApps().length === 0) {
-      let serviceAccount;
-      
+      // Get individual credentials from Secret Manager
       try {
-        // Try to get service account from environment variable first (for local development)
-        if (process.env.NODE_ENV === 'development' && process.env.FIREBASE_SERVICE_ACCOUNT) {
-          console.log('Using Firebase service account from environment variable');
-          serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-        } else {
-          // Try to get service account from Secret Manager
-          const secretData = await getSecretFromSecretManager('firebase-service-account');
-          serviceAccount = JSON.parse(secretData);
-        }
-      } catch (secretError) {
-        console.error('Error getting service account:', secretError);
+        const projectId = await getSecretFromSecretManager('firebase-project-id');
+        const clientEmail = await getSecretFromSecretManager('firebase-client-email');
+        const privateKey = await getSecretFromSecretManager('firebase-private-key');
         
-        // Fallback to credential object from environment variables if available
+        console.log('Successfully retrieved Firebase credentials from Secret Manager');
+        
+        // Initialize Firebase Admin with the individual credentials
+        initializeApp({
+          credential: cert({
+            projectId,
+            clientEmail,
+            privateKey,
+          }),
+          projectId,
+        });
+      } catch (secretError) {
+        console.error('Error getting Firebase credentials from Secret Manager:', secretError);
+        
+        // Fallback to environment variables if available (for local development)
         if (process.env.FIREBASE_PROJECT_ID && 
             process.env.FIREBASE_CLIENT_EMAIL && 
             process.env.FIREBASE_PRIVATE_KEY) {
-          console.log('Using Firebase credentials from individual environment variables');
-          serviceAccount = {
-            projectId: process.env.FIREBASE_PROJECT_ID,
-            clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-            privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
-          };
+          console.log('Using Firebase credentials from environment variables');
+          
+          initializeApp({
+            credential: cert({
+              projectId: process.env.FIREBASE_PROJECT_ID,
+              clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+              privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+            }),
+            projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || process.env.FIREBASE_PROJECT_ID,
+          });
         } else {
-          throw new Error('Could not obtain Firebase service account credentials');
+          throw new Error('Could not obtain Firebase credentials from any source');
         }
       }
-
-      // Initialize Firebase Admin with the service account
-      initializeApp({
-        credential: cert(serviceAccount),
-        projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || serviceAccount.projectId,
-      });
     }
 
     adminAuth = getAuth();
@@ -82,7 +78,7 @@ export async function initializeFirebaseAdmin() {
     return { auth: adminAuth, db: adminDb };
   } catch (error) {
     console.error('Error initializing Firebase Admin:', error);
-    throw new Error('Could not initialize Firebase Admin');
+    throw new Error('Could not initialize Firebase Admin: ' + (error instanceof Error ? error.message : String(error)));
   }
 }
 
