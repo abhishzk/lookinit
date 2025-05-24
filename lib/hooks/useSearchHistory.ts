@@ -29,8 +29,10 @@ export function useSearchHistory() {
     setError(null);
     
     try {
-      const idToken = await auth.currentUser.getIdToken();
+      console.log('Getting ID token for user:', auth.currentUser.uid);
+      const idToken = await auth.currentUser.getIdToken(true); // Force refresh
       
+      console.log('Fetching search history...');
       const response = await fetch('/api/search-history', {
         headers: {
           'Authorization': `Bearer ${idToken}`
@@ -38,11 +40,13 @@ export function useSearchHistory() {
       });
       
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Failed to fetch search history');
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        console.error('Search history API error:', response.status, errorData);
+        throw new Error(errorData.error || `Failed with status: ${response.status}`);
       }
       
       const data = await response.json();
+      console.log(`Received ${data.history?.length || 0} history items`);
       setHistory(data.history || []);
     } catch (err) {
       console.error('Error fetching history:', err);

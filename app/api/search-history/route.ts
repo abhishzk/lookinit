@@ -11,22 +11,32 @@ export async function GET(request: NextRequest) {
     // Get the authorization header
     const authHeader = request.headers.get('Authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.error('Missing or invalid Authorization header');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Extract the token
     const idToken = authHeader.split('Bearer ')[1];
+        console.log('Extracted token from header');
+
     
     // Verify the token and get the user
     const user = await verifyIdToken(idToken);
     if (!user) {
+      console.error('Token verification failed');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    console.log('User authenticated:', user.uid);
 
     // Get the Firestore database
     const db = await getAdminDb();
+    if (!db) {
+      console.error('Firestore database not initialized');
+      return NextResponse.json({ error: 'Database error' }, { status: 500 });
+    }
     
     // Query the user's search history
+    console.log('Querying search history for user:', user.uid);
     const historySnapshot = await db
       .collection('searchHistory')
       .where('userId', '==', user.uid)
@@ -38,6 +48,8 @@ export async function GET(request: NextRequest) {
       id: doc.id,
       ...doc.data()
     }));
+
+    console.log(`Found ${history.length} history items`);
 
     return NextResponse.json({ history });
   } catch (error) {
