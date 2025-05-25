@@ -125,7 +125,7 @@ export async function getUserSearchHistory(userId: string, limit = 20): Promise<
       .limit(limit)
       .get();
       
-    return snapshot.docs.map(doc => ({
+    return snapshot.docs.map((doc: FirebaseFirestore.QueryDocumentSnapshot) => ({
       id: doc.id,
       ...doc.data()
     } as SearchHistoryItem));
@@ -156,7 +156,7 @@ export async function clearUserSearchHistory(userId: string): Promise<void> {
       .get();
       
     const batch = db.batch();
-    snapshot.docs.forEach(doc => {
+    snapshot.docs.forEach((doc: FirebaseFirestore.QueryDocumentSnapshot) => {
       batch.delete(doc.ref);
     });
     
