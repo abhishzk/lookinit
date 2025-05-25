@@ -40,12 +40,24 @@ export async function initializeFirebaseAdmin() {
         
         console.log('Successfully retrieved Firebase credentials from Secret Manager');
         
+        // Fix the private key formatting - ensure proper newlines
+        const formattedPrivateKey = privateKey
+          .replace(/\\n/g, '\n')
+          .replace(/\n\n/g, '\n')
+          .trim();
+        
+        // Ensure the private key has proper PEM format
+        let finalPrivateKey = formattedPrivateKey;
+        if (!finalPrivateKey.startsWith('-----BEGIN PRIVATE KEY-----')) {
+          finalPrivateKey = `-----BEGIN PRIVATE KEY-----\n${finalPrivateKey}\n-----END PRIVATE KEY-----`;
+        }
+        
         // Initialize Firebase Admin with the individual credentials
         initializeApp({
           credential: cert({
             projectId,
             clientEmail,
-            privateKey,
+            privateKey: finalPrivateKey,
           }),
           projectId,
         });
