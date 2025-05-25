@@ -24,7 +24,22 @@ async function getSecretFromSecretManager(secretName: string): Promise<string> {
   }
 }
 
+function isBuildTime(): boolean {
+  // Check if we're in Netlify build environment
+  return process.env.NETLIFY === 'true' && !process.env.NETLIFY_DEV;
+}
+
 export async function initializeFirebaseAdmin() {
+  // Skip Firebase initialization during Netlify build
+  if (isBuildTime()) {
+    console.log('Skipping Firebase initialization during Netlify build');
+    // Return mock objects that won't be used during build
+    return { 
+      auth: null as any, 
+      db: null as any 
+    };
+  }
+
   if (adminAuth && adminDb) {
     return { auth: adminAuth, db: adminDb };
   }
@@ -32,7 +47,6 @@ export async function initializeFirebaseAdmin() {
   try {
     // Check if Firebase Admin is already initialized
     if (getApps().length === 0) {
-      // Get individual credentials from Secret Manager
       try {
         const projectId = await getSecretFromSecretManager('firebase-project-id');
         const clientEmail = await getSecretFromSecretManager('firebase-client-email');
@@ -63,24 +77,7 @@ export async function initializeFirebaseAdmin() {
         });
       } catch (secretError) {
         console.error('Error getting Firebase credentials from Secret Manager:', secretError);
-        
-        // Fallback to environment variables if available (for local development)
-        if (process.env.FIREBASE_PROJECT_ID && 
-            process.env.FIREBASE_CLIENT_EMAIL && 
-            process.env.FIREBASE_PRIVATE_KEY) {
-          console.log('Using Firebase credentials from environment variables');
-          
-          initializeApp({
-            credential: cert({
-              projectId: process.env.FIREBASE_PROJECT_ID,
-              clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-              privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
-            }),
-            projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || process.env.FIREBASE_PROJECT_ID,
-          });
-        } else {
-          throw new Error('Could not obtain Firebase credentials from any source');
-        }
+        throw new Error('Could not obtain Firebase credentials from any source');
       }
     }
 
