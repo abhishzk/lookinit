@@ -44,11 +44,10 @@ export async function GET(request: NextRequest) {
       .limit(50)
       .get();
 
-    const history = historySnapshot.docs.map(doc => ({
+    const history = historySnapshot.docs.map((doc: FirebaseFirestore.QueryDocumentSnapshot) => ({
       id: doc.id,
       ...doc.data()
     }));
-
     console.log(`Found ${history.length} history items`);
 
     return NextResponse.json({ history });
@@ -155,10 +154,9 @@ export async function DELETE(request: Request) {
         .get();
       
       const batch = db.batch();
-      snapshot.docs.forEach(doc => {
+      snapshot.docs.forEach((doc: FirebaseFirestore.QueryDocumentSnapshot) => {
         batch.delete(doc.ref);
-      });
-      
+      });      
       await batch.commit();
     } else if (id) {
       // Delete a specific search history item
