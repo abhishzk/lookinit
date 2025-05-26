@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAdminDb } from '../../../lib/firebase-admin';
+import { verifyIdToken } from './auth-utils';
 import admin from 'firebase-admin';
 
 // Check if we're in build phase
@@ -27,21 +28,6 @@ interface PostRequestBody {
   results?: any;
 }
 
-// Helper function to verify ID token
-async function verifyIdToken(idToken: string) {
-  if (isBuildPhase) {
-    throw new Error('Firebase Admin Auth is not initialized during build phase');
-  }
-  
-  try {
-    const decodedToken = await admin.auth().verifyIdToken(idToken);
-    return decodedToken;
-  } catch (error) {
-    console.error('Token verification failed:', error);
-    return null;
-  }
-}
-
 // Get user's search history
 export async function GET(request: NextRequest) {
   if (isBuildPhase) {
@@ -60,7 +46,7 @@ export async function GET(request: NextRequest) {
     const idToken = authHeader.split('Bearer ')[1];
     console.log('Extracted token from header');
 
-    // Verify the token and get the user
+    // Verify the token and get the user using existing auth-utils
     const user = await verifyIdToken(idToken);
     if (!user) {
       console.error('Token verification failed');
@@ -119,7 +105,7 @@ export async function POST(request: NextRequest) {
     // Extract the token
     const idToken = authHeader.split('Bearer ')[1];
     
-    // Verify the token and get the user
+    // Verify the token and get the user using existing auth-utils
     const user = await verifyIdToken(idToken);
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -191,7 +177,7 @@ export async function DELETE(request: Request) {
 
     const token = authHeader.split('Bearer ')[1];
     
-    // Verify the token and get the user
+    // Verify the token and get the user using existing auth-utils
     const decodedToken = await verifyIdToken(token);
     if (!decodedToken) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
