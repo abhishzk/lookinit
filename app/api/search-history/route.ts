@@ -1,12 +1,53 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAdminDb } from '../../../lib/firebase-admin';
-import { verifyIdToken } from './auth-utils';
+import admin from 'firebase-admin';
+
+// Check if we're in build phase
+const isBuildPhase = process.env.NODE_ENV === 'production' && process.env.NEXT_PHASE === 'phase-production-build';
 
 // Specify Node.js runtime
 export const runtime = 'nodejs';
 
+// Types for better type safety
+interface SearchHistoryItem {
+  id: string;
+  userId: string;
+  query: string;
+  timestamp: number;
+  results?: any;
+}
+
+interface DeleteRequestBody {
+  id?: string;
+  clearAll?: boolean;
+}
+
+interface PostRequestBody {
+  query: string;
+  results?: any;
+}
+
+// Helper function to verify ID token
+async function verifyIdToken(idToken: string) {
+  if (isBuildPhase) {
+    throw new Error('Firebase Admin Auth is not initialized during build phase');
+  }
+  
+  try {
+    const decodedToken = await admin.auth().verifyIdToken(idToken);
+    return decodedToken;
+  } catch (error) {
+    console.error('Token verification failed:', error);
+    return null;
+  }
+}
+
 // Get user's search history
 export async function GET(request: NextRequest) {
+  if (isBuildPhase) {
+    return NextResponse.json({ error: 'Service unavailable during build' }, { status: 503 });
+  }
+
   try {
     // Get the authorization header
     const authHeader = request.headers.get('Authorization');
@@ -17,9 +58,8 @@ export async function GET(request: NextRequest) {
 
     // Extract the token
     const idToken = authHeader.split('Bearer ')[1];
-        console.log('Extracted token from header');
+    console.log('Extracted token from header');
 
-    
     // Verify the token and get the user
     const user = await verifyIdToken(idToken);
     if (!user) {
@@ -44,10 +84,16 @@ export async function GET(request: NextRequest) {
       .limit(50)
       .get();
 
-    const history = historySnapshot.docs.map((doc: FirebaseFirestore.QueryDocumentSnapshot) => ({
-      id: doc.id,
-      ...doc.data()
-    }));
+    const history: SearchHistoryItem[] = historySnapshot.docs.map((doc: FirebaseFirestore.QueryDocumentSnapshot) => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        userId: data.userId || '',
+        query: data.query || '',
+        timestamp: data.timestamp || 0,
+        ...(data.results && { results: data.results })
+      };
+    });
     console.log(`Found ${history.length} history items`);
 
     return NextResponse.json({ history });
@@ -59,6 +105,10 @@ export async function GET(request: NextRequest) {
 
 // Save a search to history
 export async function POST(request: NextRequest) {
+  if (isBuildPhase) {
+    return NextResponse.json({ error: 'Service unavailable during build' }, { status: 503 });
+  }
+
   try {
     // Get the authorization header
     const authHeader = request.headers.get('Authorization');
@@ -75,22 +125,30 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Parse the request body
-    const { query, results } = await request.json();
+    // Parse the request body with error handling
+    let requestBody: PostRequestBody;
+    try {
+      requestBody = await request.json();
+    } catch (error) {
+      console.error('Invalid JSON in request body:', error);
+      return NextResponse.json({ error: 'Invalid JSON in request body' }, { status: 400 });
+    }
+
+    const { query, results } = requestBody;
     
-    if (!query) {
-      return NextResponse.json({ error: 'Query is required' }, { status: 400 });
+    if (!query || typeof query !== 'string') {
+      return NextResponse.json({ error: 'Valid query string is required' }, { status: 400 });
     }
 
     // Create document data without undefined values
     const documentData: {
       userId: string;
-      query: any;
+      query: string;
       timestamp: number;
       results?: any;
     } = {
       userId: user.uid,
-      query,
+      query: query.trim(),
       timestamp: Date.now()
     };
 
@@ -101,6 +159,9 @@ export async function POST(request: NextRequest) {
 
     // Get the Firestore database
     const db = await getAdminDb();
+    if (!db) {
+      return NextResponse.json({ error: 'Database not available' }, { status: 500 });
+    }
     
     // Add the search to history
     const historyRef = await db.collection('searchHistory').add(documentData);
@@ -117,15 +178,11 @@ export async function POST(request: NextRequest) {
 
 // Delete a search history item
 export async function DELETE(request: Request) {
-  try {
-    const auth = await getAdminAuth();
-    if (!auth) {
-      return NextResponse.json(
-        { error: 'Firebase Admin is not initialized' },
-        { status: 500 }
-      );
-    }
+  if (isBuildPhase) {
+    return NextResponse.json({ error: 'Service unavailable during build' }, { status: 503 });
+  }
 
+  try {
     // Get the authorization token from the request headers
     const authHeader = request.headers.get('Authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -135,11 +192,23 @@ export async function DELETE(request: Request) {
     const token = authHeader.split('Bearer ')[1];
     
     // Verify the token and get the user
-    const decodedToken = await auth.verifyIdToken(token);
+    const decodedToken = await verifyIdToken(token);
+    if (!decodedToken) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    
     const userId = decodedToken.uid;
     
-    // Get the item ID from the request body
-    const { id, clearAll } = await request.json();
+    // Parse the request body with error handling
+    let requestBody: DeleteRequestBody;
+    try {
+      requestBody = await request.json();
+    } catch (error) {
+      console.error('Invalid JSON in request body:', error);
+      return NextResponse.json({ error: 'Invalid JSON in request body' }, { status: 400 });
+    }
+
+    const { id, clearAll } = requestBody;
     
     const db = await getAdminDb();
     if (!db) {
@@ -149,19 +218,19 @@ export async function DELETE(request: Request) {
     if (clearAll) {
       // Clear all search history for this specific user
       const snapshot = await db
-        .collection('userSearchHistory')
+        .collection('searchHistory')
         .where('userId', '==', userId)
         .get();
       
       const batch = db.batch();
-      snapshot.docs.forEach((doc: FirebaseFirestore.QueryDocumentSnapshot) => {
+      snapshot.docs.forEach((doc: admin.firestore.QueryDocumentSnapshot) => {
         batch.delete(doc.ref);
-      });      
+      });
+      
       await batch.commit();
-    } else if (id) {
+    } else if (id && typeof id === 'string') {
       // Delete a specific search history item
-      // First verify that this item belongs to the current user
-      const docRef = db.collection('userSearchHistory').doc(id);
+      const docRef = db.collection('searchHistory').doc(id);
       const doc = await docRef.get();
       
       if (!doc.exists) {
@@ -176,7 +245,7 @@ export async function DELETE(request: Request) {
       await docRef.delete();
     } else {
       return NextResponse.json(
-        { error: 'Item ID or clearAll flag is required' },
+        { error: 'Valid item ID or clearAll flag is required' },
         { status: 400 }
       );
     }
@@ -190,16 +259,3 @@ export async function DELETE(request: Request) {
     );
   }
 }
-async function getAdminAuth() {
-  const db = await getAdminDb();
-  // Assuming getAdminDb returns the initialized admin.firestore.Firestore instance,
-  // and admin.auth() is available via the same admin SDK import.
-  // You may need to adjust the import if your firebase-admin setup is different.
-  const admin = await import('firebase-admin');
-  if (!admin.apps.length) {
-    // Initialize if not already initialized (should be handled in getAdminDb, but for safety)
-    admin.initializeApp();
-  }
-  return admin.auth();
-}
-
