@@ -1,5 +1,6 @@
 import { initializeApp, getApps, cert } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
+import { getAuth } from 'firebase-admin/auth'; // Add this import
 
 let firebaseApp: any = null;
 
@@ -64,4 +65,10 @@ export async function getAdminApp() {
 export async function getAdminDb() {
   const app = await getAdminApp();
   return getFirestore(app);
+}
+
+// Add this missing export
+export async function getAdminAuth() {
+  const app = await getAdminApp();
+  return getAuth(app);
 }
