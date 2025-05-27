@@ -184,29 +184,39 @@ export default function Page() {
   //     }
   //   };
 
-    useEffect(() => {
-      const handleSetSearchQuery = (event: Event) => {
-        const customEvent = event as CustomEvent;
-        if (customEvent.detail && customEvent.detail.query) {
-          setInputValue(customEvent.detail.query);
-          // Optional: auto-submit the query
-          // handleSubmit({ message: customEvent.detail.query, mentionTool: null, logo: null, file: '' });
-        }
-      };
+  useEffect(() => {
+    const handleSetSearchQuery = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      if (customEvent.detail && customEvent.detail.query) {
+        setInputValue(customEvent.detail.query);
+        // Optional: auto-submit the query
+        // handleSubmit({ message: customEvent.detail.query, mentionTool: null, logo: null, file: '' });
+      }
+    };
 
-      window.addEventListener('set-search-query', handleSetSearchQuery);
+    window.addEventListener('set-search-query', handleSetSearchQuery);
 
-      return () => {
-        window.removeEventListener('set-search-query', handleSetSearchQuery);
-      };
-    }, []);
+    return () => {
+      window.removeEventListener('set-search-query', handleSetSearchQuery);
+    };
+  }, []);
 
-      // This useEffect should be at the top level, not nested in another function
+  // Add this useEffect near the other useEffects in your Page component (around line 200)
+  useEffect(() => {
+    // Dispatch event when messages change
+    const event = new CustomEvent('messagesChanged', {
+      detail: { hasMessages: messages.length > 0 }
+    });
+    document.dispatchEvent(event);
+  }, [messages.length]);
+
+
+  // This useEffect should be at the top level, not nested in another function
   useEffect(() => {
     const checkSubscriptionAndLimit = async () => {
       const currentUser = auth.currentUser;
       if (!currentUser) return;
-      
+
       try {
         // Check subscription
         const response = await fetch('/api/stripe/get-subscription', {
@@ -216,12 +226,12 @@ export default function Page() {
           },
           body: JSON.stringify({ userId: currentUser.uid }),
         });
-        
+
         if (response.ok) {
           const data = await response.json();
           const isSubscribed = data.subscription?.status === 'active';
           setHasSubscription(isSubscribed);
-          
+
           // Only check search limit if user doesn't have subscription
           if (!isSubscribed) {
             const limitReached = isSearchLimitReached(currentUser.uid);
@@ -354,7 +364,7 @@ export default function Page() {
         semanticCacheKey: null,
         cachedData: ''
       };
-      setMessages(prevMessages => [...prevMessages, { ...paymentPromptMessage}]);
+      setMessages(prevMessages => [...prevMessages, { ...paymentPromptMessage }]);
       return;
     }
 
@@ -563,7 +573,7 @@ export default function Page() {
           ))}
         </div>
       )}
-      <div className={`px-2 fixed inset-x-0 bottom-0 w-full bg-gradient-to-b duration-300 ease-in-out animate-in dark:from-gray-900/10 dark:from-10% peer-[[data-state=open]]:group-[]:lg:pl-[250px] peer-[[data-state=open]]:group-[]:xl:pl-[300px]] mb-4 bring-to-front z-50`}>
+      <div className={`px-2 fixed inset-x-0 bottom-0 w-full bg-gradient-to-b duration-300 ease-in-out animate-in dark:from-gray-900/10 dark:from-10% peer-[[data-state=open]]:group-[]:lg:pl-[250px] peer-[[data-state=open]]:group-[]:xl:pl-[300px]] mb-4 bring-to-front z-40 ${messages.length === 0 ? 'pointer-events-none' : ''}`}>
         <div className="mx-auto ${isExpanded ? 'max-w-3xl' : 'max-w-2xl'} max-w-3xl sm:px-4 ">
           {/* {messages.length === 0 && !inputValue && (
             <InitialQueries questions={['What’s the most iconic music festival of all time?', 'How has Tesla’s stock performed over the last year?', 'What are the top attractions to visit in Dublin, Ireland?', 'Show most underrated travel destination in 2025?']} handleFollowUpClick={handleFollowUpClick} />
@@ -632,9 +642,9 @@ export default function Page() {
               setInputValue('');
               if (!value) return;
             }}
-            className={`w-full '}`} // Adjust width based on state
+            className={`w-full pointer-events-auto '}`} // Adjust width based on state & pointer-events
           >
-            <div className={`relative flex flex-col w-full overflow-hidden bg-white dark:bg-[#282a2c] border rounded-lg shadow-lg p-4 ${isExpanded ? 'h-40' : 'h-24'}`} // Adjust height based on state
+            <div className={`relative flex flex-col w-full overflow-hidden bg-white dark:bg-[#282a2c] border rounded-lg shadow-lg p-4 pointer-events-auto ${isExpanded ? 'h-40' : 'h-24'}`} // Adjust height based on state
             >
               {selectedMentionToolLogo && (
                 <img
