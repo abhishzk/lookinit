@@ -1,38 +1,25 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-// Change from named import to default import
+import { useState } from 'react';
 import SearchHistory from '@/components/SearchHistory';
 import { Clock } from '@phosphor-icons/react';
-import { auth, googleProvider } from '@/lib/firebase';
-import { signInWithPopup, User } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
-import { Sidebar as SidebarIcon, NotePencil, X, PersonSimple, GoogleLogo, UserCircle } from '@phosphor-icons/react';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { Sidebar as SidebarIcon, NotePencil, X, GoogleLogo, UserCircle } from '@phosphor-icons/react';
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import Link from 'next/link';
-// Import Tabler icons correctly
-import { IconRefresh, IconTrash } from '@tabler/icons-react';
+import { useAuth } from '@/lib/auth-context';
+import { UserAvatar } from './UserAvatar';
 
 export function Header() {
   const [showHistory, setShowHistory] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-    });
-
-    return () => unsubscribe();
-  }, []);
   
-  // Add this function to handle selecting a query from history
+  // Use the auth hook instead of managing state locally
+  const { user, loading, signInWithGoogle, logout } = useAuth();
+
   const handleSelectHistoryQuery = (query: string) => {
-    // You'll need to implement this to set the query in the main search input
-    // This will require some state lifting or context
     window.dispatchEvent(new CustomEvent('set-search-query', { 
       detail: { query } 
     }));
@@ -41,45 +28,27 @@ export function Header() {
 
   const handleGoogleSignIn = async () => {
     try {
-      const result = await signInWithPopup(auth, googleProvider);
-      setUser(result.user);
+      await signInWithGoogle();
     } catch (error) {
-      console.log('Google sign-in error:', error);
+      // Handle error (show toast, etc.)
+      console.error('Sign-in failed:', error);
     }
   };
 
   const handleSignOut = async () => {
     try {
-      await signOut(auth);
-      setUser(null);
+      await logout();
     } catch (error) {
-      console.log('Sign-out error:', error);
+      // Handle error
+      console.error('Sign-out failed:', error);
     }
   };
-  
+
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
 
-  useEffect(() => {
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-
-      if (currentScrollY > lastScrollY && currentScrollY > 50) {
-        setIsVisible(false);
-      } else {
-        setIsVisible(true);
-      }
-
-      setLastScrollY(currentScrollY);
-    };
-
-    window.addEventListener('scroll', handleScroll);
-
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-    };
-  }, [lastScrollY]);
+  // ... rest of your scroll handling useEffect ...
 
   return (
     <>
@@ -109,22 +78,22 @@ export function Header() {
               Upgrade to Pro
             </Link>
         </nav>
-        {/* Add the search history component */}
-        <button 
-          onClick={() => {
-            console.log("Current showHistory state:", showHistory);
-            setShowHistory(!showHistory);
-            console.log("New showHistory state:", !showHistory);
-          }}
-          className="flex items-center gap-2 p-2 w-full text-left hover:dark:bg-[#3b3e41] rounded-md text-black dark:text-white hover:bg-gray-100"
-        >
-          <Clock size={24} className="text-black dark:text-white"/> Search History
-        </button>
-        {showHistory && (
-          <div className="mt-4 border-t border-gray-200 dark:border-gray-700 pt-4">
-            {/* Pass the onSelectQuery prop to SearchHistory */}
-            <SearchHistory onSelectQuery={handleSelectHistoryQuery} />
-          </div>
+
+        {/* Search History - Only show for signed-in users */}
+        {user && (
+          <>
+            <button 
+              onClick={() => setShowHistory(!showHistory)}
+              className="flex items-center gap-2 p-2 w-full text-left hover:dark:bg-[#3b3e41] rounded-md text-black dark:text-white hover:bg-gray-100"
+            >
+              <Clock size={24} className="text-black dark:text-white"/> Search History
+            </button>
+            {showHistory && (
+              <div className="mt-4 border-t border-gray-200 dark:border-gray-700 pt-4">
+                <SearchHistory onSelectQuery={handleSelectHistoryQuery} />
+              </div>
+            )}
+          </>
         )}
       </div>
 
@@ -148,57 +117,67 @@ export function Header() {
 
         {/* Login/Signup / Profile Dropdown */}
         <div className="ml-auto flex items-center gap-2">
-          {user ? (
+          {loading ? (
+            <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 animate-pulse" />
+          ) : user ? (
             <DropdownMenu.Root>
-              <DropdownMenu.Trigger asChild>
-                <button className="w-10 h-10 rounded-full overflow-hidden border border-gray-300">
-                  <img
-                    src={user.photoURL || "/default-avatar.png"} 
-                    alt="User Avatar"
-                    className="w-full h-full object-cover"
-                  />
-                </button>
-              </DropdownMenu.Trigger>
+    <DropdownMenu.Trigger asChild>
+      <button className="focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-full">
+        <UserAvatar user={user} size={40} />
+      </button>
+    </DropdownMenu.Trigger>
 
-              <DropdownMenu.Portal>
-                <DropdownMenu.Content
-                  align="end"
-                  className="w-48 bg-white dark:bg-[#282a2c] border border-gray-200 dark:border-gray-700 rounded-md shadow-lg p-2 z-[1000] mt-1"
-                >
-                  <DropdownMenu.Item className="p-2 hover:dark:bg-[#3b3e41] hover:bg-gray-300 rounded-md cursor-pointer">
-                    <Link href="/account" className="flex items-center gap-2 text-black dark:text-white w-full">
-                      <UserCircle size={18} />
-                      My Account
-                    </Link>
-                  </DropdownMenu.Item>
-                  
-                  <DropdownMenu.Item className="p-2 hover:dark:bg-[#3b3e41] hover:bg-gray-300 rounded-md cursor-pointer">
-                    <Link href="/pro" className="flex items-center gap-2 text-black dark:text-white w-full">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 256 256">
-                      <path d="M172,36H84A48.05,48.05,0,0,0,36,84v88a48.05,48.05,0,0,0,48,48h88a48.05,48.05,0,0,0,48-48V84A48.05,48.05,0,0,0,172,36ZM84,60h88a24,24,0,0,1,24,24v4H60V84A24,24,0,0,1,84,60ZM172,196H84a24,24,0,0,1-24-24V112H196v60A24,24,0,0,1,172,196Z"></path>
-                      </svg>
-                      Upgrade to Pro
-                    </Link>
-                  </DropdownMenu.Item>
-                  
-                  <DropdownMenu.Separator className="h-px bg-gray-200 dark:bg-gray-700 my-1" />
-                  
-                  <DropdownMenu.Item
-                    onClick={handleSignOut}
-                    className="p-2 hover:dark:bg-[#3b3e41] hover:bg-gray-300 rounded-md text-red-600 dark:text-red-400 cursor-pointer"
-                  >
-                    Logout
-                  </DropdownMenu.Item>
-                </DropdownMenu.Content>
-              </DropdownMenu.Portal>
-            </DropdownMenu.Root>
-          ) : (
-            <Button variant="ghost" className="flex items-center gap-1" onClick={handleGoogleSignIn}>
-              <GoogleLogo size={18} />
-              <span className="hidden sm:inline">Login with Google</span>
-              <span className="sm:hidden">Login</span>
-            </Button>
-          )}
+    <DropdownMenu.Portal>
+      <DropdownMenu.Content
+        align="end"
+        className="w-48 bg-white dark:bg-[#282a2c] border border-gray-200 dark:border-gray-700 rounded-md shadow-lg p-2 z-[1000] mt-1"
+      >
+        {/* Updated: Removed the UserAvatar from the dropdown */}
+        <div className="p-2 border-b border-gray-200 dark:border-gray-700 mb-2">
+          <div className="flex flex-col">
+            <span className="text-sm font-medium text-black dark:text-white">
+              {user.displayName || 'User'}
+            </span>
+            <span className="text-xs text-gray-500 dark:text-gray-400">
+              {user.email}
+            </span>
+          </div>
+        </div>
+
+        <DropdownMenu.Item className="p-2 hover:dark:bg-[#3b3e41] hover:bg-gray-300 rounded-md cursor-pointer">
+          <Link href="/account" className="flex items-center gap-2 text-black dark:text-white w-full">
+            <UserCircle size={18} />
+            My Account
+          </Link>
+        </DropdownMenu.Item>
+        
+        <DropdownMenu.Item className="p-2 hover:dark:bg-[#3b3e41] hover:bg-gray-300 rounded-md cursor-pointer">
+          <Link href="/pro" className="flex items-center gap-2 text-black dark:text-white w-full">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 256 256">
+            <path d="M172,36H84A48.05,48.05,0,0,0,36,84v88a48.05,48.05,0,0,0,48,48h88a48.05,48.05,0,0,0,48-48V84A48.05,48.05,0,0,0,172,36ZM84,60h88a24,24,0,0,1,24,24v4H60V84A24,24,0,0,1,84,60ZM172,196H84a24,24,0,0,1-24-24V112H196v60A24,24,0,0,1,172,196Z"></path>
+            </svg>
+            Upgrade to Pro
+          </Link>
+        </DropdownMenu.Item>
+        
+        <DropdownMenu.Separator className="h-px bg-gray-200 dark:bg-gray-700 my-1" />
+        
+        <DropdownMenu.Item
+          onClick={handleSignOut}
+          className="p-2 hover:dark:bg-[#3b3e41] hover:bg-gray-300 rounded-md text-red-600 dark:text-red-400 cursor-pointer"
+        >
+          Logout
+        </DropdownMenu.Item>
+      </DropdownMenu.Content>
+    </DropdownMenu.Portal>
+  </DropdownMenu.Root>
+) : (
+  <Button variant="ghost" className="flex items-center gap-1" onClick={handleGoogleSignIn}>
+    <GoogleLogo size={18} />
+    <span className="hidden sm:inline">Login with Google</span>
+    <span className="sm:hidden">Login</span>
+  </Button>
+)}
         </div>
       </header>
     </>

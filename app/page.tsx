@@ -39,6 +39,8 @@ import RateLimit from '@/components/answer/RateLimit';
 import { mentionToolConfig } from './tools/mentionToolConfig';
 import NewsTicker from './NewsTicker';
 import { User } from 'firebase/auth';
+import { AuthProvider } from '@/lib/auth-context';
+import { Header } from '@/components/header';
 // 2. Set up types
 interface SearchResult {
   favicon: string;
@@ -130,7 +132,7 @@ interface Shopping {
 
 const mentionTools = mentionToolConfig.useMentionQueries ? mentionToolConfig.mentionTools : [];
 
-export default function Page() {
+export default function HomePage() {
   // Add this state variable at the top of your Page component
   const [searchLimitReached, setSearchLimitReached] = useState(false);
   const [user, setUser] = useState<User | null>(null);

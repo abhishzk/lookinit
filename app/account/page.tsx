@@ -1,23 +1,21 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { auth } from '@/lib/firebase';
-import { User } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { resetSearchCount } from '@/lib/search-counter';
+import { useAuth } from '@/lib/auth-context'; // Use the auth context
+import { UserAvatar } from '@/components/UserAvatar'; // Import the avatar component
 
 export default function AccountPage() {
-  const [user, setUser] = useState<User | null>(null);
+  const { user } = useAuth(); // Use auth context instead of local state
   const [subscription, setSubscription] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
-      setUser(currentUser);
-      
-      if (currentUser) {
+    if (user) {
+      const fetchSubscription = async () => {
         try {
           // Fetch subscription data from your API
           const response = await fetch('/api/stripe/get-subscription', {
@@ -25,7 +23,7 @@ export default function AccountPage() {
             headers: {
               'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ userId: currentUser.uid }),
+            body: JSON.stringify({ userId: user.uid }),
           });
           
           if (response.ok) {
@@ -34,19 +32,21 @@ export default function AccountPage() {
             
             // If user has an active subscription, reset their search count
             if (data.subscription?.status === 'active') {
-              resetSearchCount(currentUser.uid);
+              resetSearchCount(user.uid);
             }
           }
         } catch (error) {
           console.error('Error fetching subscription:', error);
+        } finally {
+          setLoading(false);
         }
-      }
-      
-      setLoading(false);
-    });
+      };
 
-    return () => unsubscribe();
-  }, []);
+      fetchSubscription();
+    } else {
+      setLoading(false);
+    }
+  }, [user]);
 
   const handleManageSubscription = async () => {
     try {
@@ -107,14 +107,17 @@ export default function AccountPage() {
         <div className="bg-white dark:bg-[#282a2c] rounded-lg shadow-lg p-6 mb-6">
           <h2 className="text-xl font-semibold mb-4">Profile</h2>
           <div className="flex items-center mb-4">
-            <img 
-              src={user.photoURL || "/default-avatar.png"} 
-              alt="Profile" 
-              className="w-16 h-16 rounded-full mr-4"
-            />
+            {/* Replace the img tag with UserAvatar component */}
+            <div className="mr-4">
+              <UserAvatar user={user} size={64} />
+            </div>
             <div>
-              <p className="font-medium">{user.displayName}</p>
+              <p className="font-medium">{user.displayName || 'User'}</p>
               <p className="text-gray-600 dark:text-gray-400">{user.email}</p>
+              {/* Add some additional user info */}
+              <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">
+                Member since {new Date(user.metadata.creationTime || '').toLocaleDateString()}
+              </p>
             </div>
           </div>
         </div>
