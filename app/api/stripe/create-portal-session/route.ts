@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
+import { CONFIG } from '@/lib/config';
+
 
 const stripe = new Stripe(process.env.STRIPE_API_KEY!, {
   apiVersion: '2025-02-24.acacia',
@@ -21,7 +23,7 @@ export async function POST(request: Request) {
     }
 
     // Create a Stripe customer portal session
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://lookinit.com';
+    const baseUrl = CONFIG.baseUrl;
     const session = await stripe.billingPortal.sessions.create({
       customer: customerId,
       return_url: `${baseUrl}/account`,

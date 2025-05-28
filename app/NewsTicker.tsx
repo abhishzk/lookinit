@@ -67,7 +67,7 @@ export default function NewsTicker() {
   }
 
   return (
-    <div className="relative overflow-hidden bg-gray-100 dark:bg-[#1B1C1D] py-4 h-20 flex items-center scrollbar-hide animate-scroll">
+    <div className="relative overflow-hidden bg-transparent py-4 h-20 flex items-center scrollbar-hide animate-scroll">
       <Marquee speed={30} gradient={false} pauseOnHover={true}>
         {news.map((item, index) => (
           <a

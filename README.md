@@ -28,7 +28,7 @@ To set up Lookinit locally, follow these steps:
    ```
 4. Start the development server:
    ```sh
-   npm start
+   npm run dev
    ```
 5. Open your browser and visit `http://localhost:3000`
 
@@ -53,5 +53,5 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 ## Contact
 For questions or feedback, reach out at:
 - **Website:** [Lookinit.com](https://lookinit.com)
-- **GitHub Issues:** [Report Issues](https://github.com/yourusername/lookinit/issues)
+- **GitHub Issues:** [Report Issues](https://github.com/abhishzk/lookinit/issues)
 

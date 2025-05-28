@@ -9,12 +9,13 @@ import './globals.css';
 import { AI } from './action';
 import { Header } from '@/components/header';
 import { Providers } from '@/components/providers';
+import { AuthProvider } from '@/lib/auth-context';
 
 const meta = {
   title: 'Results, simple and smart.',
-  description:
-    'AI Answer Engine',
+  description: 'AI Answer Engine',
 };
+
 export const metadata: Metadata = {
   ...meta,
   title: {
@@ -47,9 +48,9 @@ export const viewport = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <html lang="en" suppressHydrationWarning>
       <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
@@ -57,25 +58,28 @@ export default function RootLayout({
         className={`font-sans antialiased ${GeistSans.variable} ${GeistMono.variable}`}
       >
         <Toaster />
-        <AI>
-          <Providers
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-          >
-            <div className="flex flex-col min-h-screen">
-              <Header />
-              <main className="flex flex-col flex-1 bg-muted/50 dark:bg-background px-4">
-                {children}
-              </main>
+        <AuthProvider>
+          <AI>
+            <Providers
+              attribute="class"
+              defaultTheme="system"
+              enableSystem
+              disableTransitionOnChange
+            >
+              <div className="flex flex-col min-h-screen">
+                <Header />
+                <main className="flex flex-col flex-1 bg-muted/50 dark:bg-background px-4 pb-16">
+                  {children}
+                </main>
+              </div>
               <Footer />
-            </div>
-          </Providers>
-        </AI>
+            </Providers>
+          </AI>
+        </AuthProvider>
         <Analytics />
       </body>
     </html>
   );
 }
+
 export const runtime = 'edge';
