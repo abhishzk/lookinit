@@ -3,6 +3,8 @@ import { z } from 'zod'; // For validation
 import { Ratelimit } from '@upstash/ratelimit'; // For rate limiting
 import { Redis } from '@upstash/redis'; // Redis client for rate limiting
 import nodemailer from 'nodemailer'; // For email notifications
+import { CONFIG } from '@/lib/config'; // Add this import
+
 // import { PrismaClient } from '@prisma/client'; // For database integration
 // import { createPool } from '@prisma/connection-pool';
 
@@ -49,9 +51,9 @@ const inquirySchema = z.object({
 
 // Configure email transporter
 const transporter = nodemailer.createTransport({
-  host: process.env.EMAIL_HOST,
-  port: Number(process.env.EMAIL_PORT) || 587,
-  secure: process.env.EMAIL_SECURE === 'true',
+  host: CONFIG.email.host,
+  port: CONFIG.email.port,
+  secure: CONFIG.email.secure,
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASSWORD,
@@ -61,8 +63,8 @@ const transporter = nodemailer.createTransport({
 // Function to send notification email
 async function sendEmailNotification(formData: z.infer<typeof inquirySchema>) {
   const mailOptions = {
-    from: process.env.EMAIL_FROM,
-    to: process.env.NOTIFICATION_EMAIL,
+    from: CONFIG.email.from,
+    to: CONFIG.email.notificationEmail,
     subject: `New Enterprise Inquiry from ${formData.name} at ${formData.company}`,
     text: `
       Name: ${formData.name}
@@ -125,7 +127,7 @@ async function sendToCRM(formData: z.infer<typeof inquirySchema>) {
 // Add this function definition before you use it in your POST handler
 async function sendConfirmationEmail(formData: z.infer<typeof inquirySchema>) {
   const mailOptions = {
-    from:  `"Lookinit" <${process.env.EMAIL_FROM}>`,
+    from:  `"Lookinit" <${CONFIG.email.from}>`,
     to: formData.email, // Send to the user's email address
     subject: `Thank you for your inquiry, ${formData.name}`,
     text: `

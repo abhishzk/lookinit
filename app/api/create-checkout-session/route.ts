@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
+import { CONFIG } from '@/lib/config';
 
 const stripe = new Stripe(process.env.STRIPE_API_KEY!, {
   apiVersion: '2025-02-24.acacia',
@@ -13,10 +14,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
     }
     
-    // Define price IDs for each plan (these would come from your Stripe dashboard)
+    // Define price IDs for each plan using config
     const priceIds: Record<string, string> = {
-      basic: process.env.STRIPE_BASIC_PRICE_ID!,
-      pro: process.env.STRIPE_PRO_PRICE_ID!,
+      basic: CONFIG.stripe.basicPriceId,
+      pro: CONFIG.stripe.proPriceId,
     };
     
     if (!priceIds[planId]) {
@@ -26,8 +27,8 @@ export async function POST(req: Request) {
       );
     }
 
-    // Update these URLs to use your actual frontend URL
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://lookinit.com';
+    // Use config file for base URL
+    const baseUrl = CONFIG.baseUrl;
 
     // Create a checkout session
     const session = await stripe.checkout.sessions.create({
@@ -35,7 +36,7 @@ export async function POST(req: Request) {
       mode: 'subscription',
       line_items: [
         {
-          price: planId === 'pro' ? process.env.STRIPE_PRO_PRICE_ID : process.env.STRIPE_BASIC_PRICE_ID,
+          price: priceIds[planId], // Use the price ID from config
           quantity: 1,
         },
       ],
@@ -46,7 +47,7 @@ export async function POST(req: Request) {
         planId,
         source: source || 'website',
       },
-      customer_email: req.headers.get('x-user-email') || undefined, // Optional: pass user email if available
+      customer_email: req.headers.get('x-user-email') || undefined,
     });
 
     return NextResponse.json({ sessionId: session.id, url: session.url });

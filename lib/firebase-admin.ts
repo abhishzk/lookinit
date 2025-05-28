@@ -1,6 +1,6 @@
 import { initializeApp, getApps, cert } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
-import { getAuth } from 'firebase-admin/auth'; // Add this import
+import { getAuth } from 'firebase-admin/auth';
 
 let firebaseApp: any = null;
 
@@ -28,6 +28,11 @@ function getFirebasePrivateKey(): string {
   const fullKey = parts.join('');
   console.log(`Reconstructed private key length: ${fullKey.length}`);
   
+  // Ensure proper formatting
+  if (!fullKey.includes('-----BEGIN PRIVATE KEY-----')) {
+    throw new Error('Invalid private key format: missing header');
+  }
+  
   return fullKey;
 }
 
@@ -41,6 +46,11 @@ export async function getAdminApp() {
       if (!process.env.FIREBASE_PROJECT_ID || !process.env.FIREBASE_CLIENT_EMAIL) {
         throw new Error('Missing FIREBASE_PROJECT_ID or FIREBASE_CLIENT_EMAIL');
       }
+
+      console.log('Initializing Firebase Admin with:');
+      console.log('Project ID:', process.env.FIREBASE_PROJECT_ID);
+      console.log('Client Email:', process.env.FIREBASE_CLIENT_EMAIL);
+      console.log('Private Key Length:', privateKey.length);
 
       firebaseApp = initializeApp({
         credential: cert({
@@ -67,7 +77,6 @@ export async function getAdminDb() {
   return getFirestore(app);
 }
 
-// Add this missing export
 export async function getAdminAuth() {
   const app = await getAdminApp();
   return getAuth(app);
