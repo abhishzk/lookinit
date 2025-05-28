@@ -41,7 +41,6 @@ import NewsTicker from './NewsTicker';
 import { User } from 'firebase/auth';
 import { AuthProvider } from '@/lib/auth-context';
 import { Header } from '@/components/header';
-
 // 2. Set up types
 interface SearchResult {
   favicon: string;
@@ -69,6 +68,7 @@ interface Message {
   ticker?: string | undefined;
   spotify?: string | undefined;
   isolatedView: boolean;
+
 }
 interface StreamMessage {
   isolatedView: any;
@@ -132,27 +132,11 @@ interface Shopping {
 
 const mentionTools = mentionToolConfig.useMentionQueries ? mentionToolConfig.mentionTools : [];
 
-// Add network quality check helper
-const checkNetworkQuality = async (): Promise<boolean> => {
-  try {
-    const start = Date.now();
-    await fetch('/api/health', {
-      method: 'HEAD',
-      cache: 'no-cache'
-    });
-    const duration = Date.now() - start;
-    return duration < 2000; // Good connection if under 2 seconds
-  } catch {
-    return false;
-  }
-};
-
 export default function HomePage() {
   // Add this state variable at the top of your Page component
   const [searchLimitReached, setSearchLimitReached] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [hasSubscription, setHasSubscription] = useState(false);
-  const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected' | 'reconnecting'>('connected');
   const { toast } = useToast();
   const [file, setFile] = useState('');
   const [mentionQuery, setMentionQuery] = useState('');
@@ -172,26 +156,35 @@ export default function HomePage() {
   const [messages, setMessages] = useState<Message[]>([]);
   // 6. Set up state for the CURRENT LLM response (for displaying in the UI while streaming)
   const [currentLlmResponse, setCurrentLlmResponse] = useState('');
-
   // 7. Set up handler for when the user clicks on the follow up button
   const handleFollowUpClick = useCallback(async (question: string) => {
     setCurrentLlmResponse('');
     await handleUserMessageSubmission({ message: question, mentionTool: null, logo: null, file: file });
   }, []);
 
-  // Add connection monitoring
-  useEffect(() => {
-    const handleOnline = () => setConnectionStatus('connected');
-    const handleOffline = () => setConnectionStatus('disconnected');
+  // // Add this useEffect to check auth state and subscription
+  // useEffect(() => {
+  //   const checkSubscription = async () => {
+  //     const currentUser = auth.currentUser;
+  //     if (!currentUser) return;
 
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
+  //     try {
+  //       const response = await fetch('/api/stripe/get-subscription', {
+  //         method: 'POST',
+  //         headers: {
+  //           'Content-Type': 'application/json',
+  //         },
+  //         body: JSON.stringify({ userId: currentUser.uid }),
+  //       });
 
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  }, []);
+  //       if (response.ok) {
+  //         const data = await response.json();
+  //         setHasSubscription(data.subscription?.status === 'active');
+  //       }
+  //     } catch (error) {
+  //       console.error('Error checking subscription:', error);
+  //     }
+  //   };
 
   useEffect(() => {
     const handleSetSearchQuery = (event: Event) => {
@@ -218,6 +211,7 @@ export default function HomePage() {
     });
     document.dispatchEvent(event);
   }, [messages.length]);
+
 
   // This useEffect should be at the top level, not nested in another function
   useEffect(() => {
@@ -305,12 +299,12 @@ export default function HomePage() {
     }
   };
 
+
   // 9. Set up handler for when a submission is made, which will call the myAction function
   const handleSubmit = async (payload: { message: string; mentionTool: string | null, logo: string | null, file: string }) => {
     if (!payload.message) return;
     await handleUserMessageSubmission(payload);
   };
-
   const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
     if (!inputValue.trim()) return;
@@ -334,6 +328,7 @@ export default function HomePage() {
       }, 100);
     };
 
+
     const payload = {
       message: inputValue.trim(),
       mentionTool: selectedMentionTool,
@@ -345,21 +340,11 @@ export default function HomePage() {
     setSelectedMentionTool(null);
     setSelectedMentionToolLogo(null);
     setFile('');
-  };
 
+  };
   const handleUserMessageSubmission = async (payload: {
     logo: any; message: string; mentionTool: string | null, file: string
   }): Promise<void> => {
-    // Check network quality before starting
-    const hasGoodConnection = await checkNetworkQuality();
-    if (!hasGoodConnection) {
-      toast({
-        title: "Poor Connection",
-        description: "Your connection seems slow. The response may take longer.",
-        duration: 5000,
-      });
-    }
-
     // Skip search limit check if user has subscription
     if (!hasSubscription && isSearchLimitReached(user?.uid)) {
       setSearchLimitReached(true);
@@ -420,217 +405,89 @@ export default function HomePage() {
       falBase64Image: null,
     };
     setMessages(prevMessages => [...prevMessages, newMessage]);
-
+    
     let lastAppendedResponse = "";
     let searchCompleted = false;
-    let retryCount = 0;
-    const maxRetries = 3;
+    
+    try {
+      const streamableValue = await myAction(payload.message, payload.mentionTool, payload.logo, payload.file);
 
-    const executeStream = async (): Promise<void> => {
-      // Add connection check before making the call
-      if (connectionStatus === 'disconnected') {
-        throw new Error('No internet connection');
-      }
+      let llmResponseString = "";
+      for await (const message of readStreamableValue(streamableValue)) {
+        const typedMessage = message as StreamMessage;
+        setMessages((prevMessages) => {
+          const messagesCopy = [...prevMessages];
+          const messageIndex = messagesCopy.findIndex(msg => msg.id === newMessageId);
+          if (messageIndex !== -1) {
+            const currentMessage = messagesCopy[messageIndex];
 
-      setConnectionStatus('connected');
+            currentMessage.status = typedMessage.status === 'rateLimitReached' ? 'rateLimitReached' : currentMessage.status;
 
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => {
-        controller.abort();
-      }, 60000); // 60 second timeout
+            if (typedMessage.isolatedView) {
+              currentMessage.isolatedView = true;
+            }
 
-      try {
-        const streamableValue = await myAction(payload.message, payload.mentionTool, payload.logo, payload.file);
+            if (typedMessage.llmResponse && typedMessage.llmResponse !== lastAppendedResponse) {
+              currentMessage.content += typedMessage.llmResponse;
+              lastAppendedResponse = typedMessage.llmResponse;
+            }
 
-        // Add heartbeat to detect connection issues early
-        let lastMessageTime = Date.now();
-        const heartbeatInterval = setInterval(() => {
-          if (Date.now() - lastMessageTime > 30000) { // 30 seconds without a message
-            console.warn('Stream appears stalled, connection may be lost');
-            setConnectionStatus('reconnecting');
-          }
-        }, 5000);
+            currentMessage.isStreaming = typedMessage.llmResponseEnd ? false : currentMessage.isStreaming;
+            currentMessage.searchResults = typedMessage.searchResults || currentMessage.searchResults;
+            currentMessage.images = typedMessage.images ? [...typedMessage.images] : currentMessage.images;
+            currentMessage.videos = typedMessage.videos ? [...typedMessage.videos] : currentMessage.videos;
+            currentMessage.followUp = typedMessage.followUp || currentMessage.followUp;
+            currentMessage.semanticCacheKey = messagesCopy[messageIndex];
+            currentMessage.falBase64Image = typedMessage.falBase64Image;
 
-        let llmResponseString = "";
-        for await (const message of readStreamableValue(streamableValue)) {
-          lastMessageTime = Date.now();
-          setConnectionStatus('connected');
+            if (typedMessage.conditionalFunctionCallUI) {
+              const functionCall = typedMessage.conditionalFunctionCallUI;
+              if (functionCall.type === 'places') currentMessage.places = functionCall.places;
+              if (functionCall.type === 'shopping') currentMessage.shopping = functionCall.shopping;
+              if (functionCall.type === 'ticker') currentMessage.ticker = functionCall.data;
+              if (functionCall.trackId) currentMessage.spotify = functionCall.trackId;
+            }
 
-          // Clear timeout on successful message
-          clearTimeout(timeoutId);
+            if (typedMessage.cachedData) {
+              const data = JSON.parse(typedMessage.cachedData);
+              currentMessage.searchResults = data.searchResults;
+              currentMessage.images = data.images;
+              currentMessage.videos = data.videos;
+              currentMessage.content = data.llmResponse;
+              currentMessage.isStreaming = false;
+              currentMessage.semanticCacheKey = data.semanticCacheKey;
+              currentMessage.conditionalFunctionCallUI = data.conditionalFunctionCallUI;
+              currentMessage.followUp = data.followUp;
 
-          // Reset timeout for next message
-          const newTimeoutId = setTimeout(() => {
-            controller.abort();
-          }, 30000); // 30 seconds between messages
-
-          const typedMessage = message as StreamMessage;
-
-          // Reset retry count on successful message
-          retryCount = 0;
-
-          setMessages((prevMessages) => {
-            const messagesCopy = [...prevMessages];
-            const messageIndex = messagesCopy.findIndex(msg => msg.id === newMessageId);
-            if (messageIndex !== -1) {
-              const currentMessage = messagesCopy[messageIndex];
-
-              currentMessage.status = typedMessage.status === 'rateLimitReached' ? 'rateLimitReached' : currentMessage.status;
-
-              if (typedMessage.isolatedView) {
-                currentMessage.isolatedView = true;
-              }
-
-              if (typedMessage.llmResponse && typedMessage.llmResponse !== lastAppendedResponse) {
-                currentMessage.content += typedMessage.llmResponse;
-                lastAppendedResponse = typedMessage.llmResponse;
-              }
-
-              currentMessage.isStreaming = typedMessage.llmResponseEnd ? false : currentMessage.isStreaming;
-              currentMessage.searchResults = typedMessage.searchResults || currentMessage.searchResults;
-              currentMessage.images = typedMessage.images ? [...typedMessage.images] : currentMessage.images;
-              currentMessage.videos = typedMessage.videos ? [...typedMessage.videos] : currentMessage.videos;
-              currentMessage.followUp = typedMessage.followUp || currentMessage.followUp;
-              currentMessage.semanticCacheKey = messagesCopy[messageIndex];
-              currentMessage.falBase64Image = typedMessage.falBase64Image;
-
-              if (typedMessage.conditionalFunctionCallUI) {
-                const functionCall = typedMessage.conditionalFunctionCallUI;
+              if (data.conditionalFunctionCallUI) {
+                const functionCall = data.conditionalFunctionCallUI;
                 if (functionCall.type === 'places') currentMessage.places = functionCall.places;
                 if (functionCall.type === 'shopping') currentMessage.shopping = functionCall.shopping;
                 if (functionCall.type === 'ticker') currentMessage.ticker = functionCall.data;
                 if (functionCall.trackId) currentMessage.spotify = functionCall.trackId;
               }
-
-              if (typedMessage.cachedData) {
-                const data = JSON.parse(typedMessage.cachedData);
-                currentMessage.searchResults = data.searchResults;
-                currentMessage.images = data.images;
-                currentMessage.videos = data.videos;
-                currentMessage.content = data.llmResponse;
-                currentMessage.isStreaming = false;
-                currentMessage.semanticCacheKey = data.semanticCacheKey;
-                currentMessage.conditionalFunctionCallUI = data.conditionalFunctionCallUI;
-                currentMessage.followUp = data.followUp;
-
-                if (data.conditionalFunctionCallUI) {
-                  const functionCall = data.conditionalFunctionCallUI;
-                  if (functionCall.type === 'places') currentMessage.places = functionCall.places;
-                  if (functionCall.type === 'shopping') currentMessage.shopping = functionCall.shopping;
-                  if (functionCall.type === 'ticker') currentMessage.ticker = functionCall.data;
-                  if (functionCall.trackId) currentMessage.spotify = functionCall.trackId;
-                }
-              }
-
-              // Mark as completed when streaming ends
-              if (typedMessage.llmResponseEnd) {
-                searchCompleted = true;
-                clearTimeout(newTimeoutId);
-              }
             }
-            return messagesCopy;
-          });
 
-          if (typedMessage.llmResponse) {
-            llmResponseString += typedMessage.llmResponse;
-            setCurrentLlmResponse(llmResponseString);
-          }
-
-          if (typedMessage.llmResponseEnd) {
-            clearInterval(heartbeatInterval);
-            break;
-          }
-        }
-
-        clearInterval(heartbeatInterval);
-        clearTimeout(timeoutId);
-        searchCompleted = true;
-
-      } catch (error) {
-        clearTimeout(timeoutId);
-        console.error("Error streaming data for user message:", error);
-
-        if (error instanceof Error && error.name === 'AbortError') {
-          console.error("Stream timeout:", error);
-          // Handle timeout specifically
-          setMessages((prevMessages) => {
-            const messagesCopy = [...prevMessages];
-            const messageIndex = messagesCopy.findIndex(msg => msg.id === newMessageId);
-            if (messageIndex !== -1) {
-              messagesCopy[messageIndex].isStreaming = false;
-              messagesCopy[messageIndex].content += `\n\n*Request timed out. Please try again.*`;
-            }
-            return messagesCopy;
-          });
-          searchCompleted = true;
-          return;
-        }
-
-        // Check if it's a connection error and we haven't exceeded retry limit
-        if (error instanceof Error &&
-          (error.message.includes('Connection closed') ||
-            error.message.includes('network') ||
-            error.message.includes('fetch') ||
-            error.message.includes('No internet connection')) &&
-          retryCount < maxRetries) {
-
-          retryCount++;
-          console.log(`Retrying stream (attempt ${retryCount}/${maxRetries})...`);
-
-          setConnectionStatus('reconnecting');
-
-          // Update UI to show retry
-          setMessages((prevMessages) => {
-            const messagesCopy = [...prevMessages];
-            const messageIndex = messagesCopy.findIndex(msg => msg.id === newMessageId);
-            if (messageIndex !== -1) {
-              messagesCopy[messageIndex].content += `\n\n*Reconnecting... (${retryCount}/${maxRetries})*`;
-            }
-            return messagesCopy;
-          });
-
-          // Add exponential backoff
-          await new Promise(resolve => setTimeout(resolve, Math.pow(2, retryCount) * 1000));
-
-          return executeStream(); // Retry
-        }
-
-        // If not a connection error or max retries exceeded, handle gracefully
-        if (error instanceof Error &&
-          (error.message.includes('Connection closed') ||
-            error.message.includes('network') ||
-            error.message.includes('fetch'))) {
-          setConnectionStatus('disconnected');
-
-          // Auto-retry after a delay
-          setTimeout(() => {
-            setConnectionStatus('reconnecting');
-          }, 2000);
-        }
-
-        setMessages((prevMessages) => {
-          const messagesCopy = [...prevMessages];
-          const messageIndex = messagesCopy.findIndex(msg => msg.id === newMessageId);
-          if (messageIndex !== -1) {
-            messagesCopy[messageIndex].isStreaming = false;
-            if (retryCount >= maxRetries) {
-              messagesCopy[messageIndex].content += `\n\n*Connection lost. Please try again.*`;
-            } else {
-              messagesCopy[messageIndex].content += `\n\n*An error occurred. Please try again.*`;
+            // Mark as completed when streaming ends
+            if (typedMessage.llmResponseEnd) {
+              searchCompleted = true;
             }
           }
           return messagesCopy;
         });
-
-        searchCompleted = true;
+        
+        if (typedMessage.llmResponse) {
+          llmResponseString += typedMessage.llmResponse;
+          setCurrentLlmResponse(llmResponseString);
+        }
       }
-    };
-
-    try {
-      await executeStream();
-    } catch (error) {
-      console.error("Failed to execute stream:", error);
+      
+      // Mark as completed if we exit the loop
       searchCompleted = true;
+      
+    } catch (error) {
+      console.error("Error streaming data for user message:", error);
+      searchCompleted = true; // Still save even if there was an error
     } finally {
       // Save search to history AFTER the search completes
       if (searchCompleted && user && payload.message.trim()) {
@@ -646,7 +503,6 @@ export default function HomePage() {
       }
     }
   };
-
   const handleFileUpload = (file: File) => {
     console.log('file', file);
     // file reader to read the file and set the file state
@@ -659,22 +515,10 @@ export default function HomePage() {
       }
     };
     fileReader.readAsDataURL(file)
-  };
 
+  };
   return (
     <div>
-      {/* Add connection status indicators */}
-      {connectionStatus === 'disconnected' && (
-        <div className="fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-lg z-50">
-          Connection lost. Check your internet.
-        </div>
-      )}
-      {connectionStatus === 'reconnecting' && (
-        <div className="fixed top-4 right-4 bg-yellow-500 text-white px-4 py-2 rounded-lg z-50">
-          Reconnecting...
-        </div>
-      )}
-
       {messages.length > 0 && (
         <div className="flex flex-col pb-32 md:pb-40">
           {messages.map((message, index) => (
@@ -723,6 +567,7 @@ export default function HomePage() {
                       )}
                     </div>
                     <div className="w-full md:w-1/4 md:pl-2">
+
                       {message.shopping && message.shopping.length > 0 && <ShoppingComponent key={`shopping-${index}`} shopping={message.shopping} />}
                       {message.images && <ImagesComponent key={`images-${index}`} images={message.images} />}
                       {message.videos && <VideosComponent key={`videos-${index}`} videos={message.videos} />}
@@ -740,7 +585,7 @@ export default function HomePage() {
       <div className={`px-2 fixed inset-x-0 bottom-0 w-full bg-gradient-to-b duration-300 ease-in-out animate-in dark:from-gray-900/10 dark:from-10% peer-[[data-state=open]]:group-[]:lg:pl-[250px] peer-[[data-state=open]]:group-[]:xl:pl-[300px]] mb-4 bring-to-front z-40 ${messages.length === 0 ? 'pointer-events-none' : ''}`}>
         <div className="mx-auto ${isExpanded ? 'max-w-3xl' : 'max-w-2xl'} max-w-3xl sm:px-4 ">
           {/* {messages.length === 0 && !inputValue && (
-            <InitialQueries questions={['What's the most iconic music festival of all time?', 'How has Tesla's stock performed over the last year?', 'What are the top attractions to visit in Dublin, Ireland?', 'Show most underrated travel destination in 2025?']} handleFollowUpClick={handleFollowUpClick} />
+            <InitialQueries questions={['What’s the most iconic music festival of all time?', 'How has Tesla’s stock performed over the last year?', 'What are the top attractions to visit in Dublin, Ireland?', 'Show most underrated travel destination in 2025?']} handleFollowUpClick={handleFollowUpClick} />
           )} */}
           {mentionQuery && (
             <div className="">
@@ -875,14 +720,12 @@ export default function HomePage() {
               <div className="absolute right-5 bottom-5">
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button type="submit" size="icon" disabled={inputValue === '' || connectionStatus === 'disconnected'}>
+                    <Button type="submit" size="icon" disabled={inputValue === ''}>
                       <ArrowUp />
                       <span className="sr-only">Send message</span>
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent>
-                    {connectionStatus === 'disconnected' ? 'No connection' : 'Send message'}
-                  </TooltipContent>
+                  <TooltipContent>Send message</TooltipContent>
                 </Tooltip>
               </div>
             </div>
@@ -902,6 +745,7 @@ export default function HomePage() {
             <a href="/blog" className="text-blue-600 dark:text-blue-400 hover:underline font-medium">Blog</a>
           </div>
         </div> */}
+
       </div>
     </div>
   );
