@@ -348,8 +348,6 @@ export default function HomePage() {
     // Skip search limit check if user has subscription
     if (!hasSubscription && isSearchLimitReached(user?.uid)) {
       setSearchLimitReached(true);
-
-      // Add the payment prompt message
       const paymentPromptMessage = {
         id: Date.now(),
         type: 'paymentPrompt',
@@ -370,25 +368,9 @@ export default function HomePage() {
       return;
     }
 
-    // Save search to history if user is logged in
-    if (user && payload.message.trim()) {
-      try {
-        //     await saveSearchToHistory(user.uid, payload.message);
-        //   } catch (error) {
-        //     console.error('Error saving search to history:', error);
-        //   }
-        // }
-        await saveSearch(payload.message);
-      } catch (error) {
-        console.error('Error saving search to history:', error);
-      }
-    }
-
     // Only increment search count if user doesn't have subscription
     if (!hasSubscription && user) {
       const newCount = incrementSearchCount(user?.uid);
-
-      // Show toast notification about remaining searches
       if (newCount < SEARCH_LIMIT) {
         toast({
           title: `Search ${newCount} of ${SEARCH_LIMIT}`,
@@ -419,11 +401,14 @@ export default function HomePage() {
       spotify: undefined,
       semanticCacheKey: null,
       cachedData: '',
-      isolatedView: !!payload.mentionTool, // Set isolatedView based on mentionTool
+      isolatedView: !!payload.mentionTool,
       falBase64Image: null,
     };
     setMessages(prevMessages => [...prevMessages, newMessage]);
+    
     let lastAppendedResponse = "";
+    let searchCompleted = false;
+    
     try {
       const streamableValue = await myAction(payload.message, payload.mentionTool, payload.logo, payload.file);
 
@@ -455,7 +440,6 @@ export default function HomePage() {
             currentMessage.semanticCacheKey = messagesCopy[messageIndex];
             currentMessage.falBase64Image = typedMessage.falBase64Image;
 
-
             if (typedMessage.conditionalFunctionCallUI) {
               const functionCall = typedMessage.conditionalFunctionCallUI;
               if (functionCall.type === 'places') currentMessage.places = functionCall.places;
@@ -475,7 +459,6 @@ export default function HomePage() {
               currentMessage.conditionalFunctionCallUI = data.conditionalFunctionCallUI;
               currentMessage.followUp = data.followUp;
 
-
               if (data.conditionalFunctionCallUI) {
                 const functionCall = data.conditionalFunctionCallUI;
                 if (functionCall.type === 'places') currentMessage.places = functionCall.places;
@@ -484,16 +467,40 @@ export default function HomePage() {
                 if (functionCall.trackId) currentMessage.spotify = functionCall.trackId;
               }
             }
+
+            // Mark as completed when streaming ends
+            if (typedMessage.llmResponseEnd) {
+              searchCompleted = true;
+            }
           }
           return messagesCopy;
         });
+        
         if (typedMessage.llmResponse) {
           llmResponseString += typedMessage.llmResponse;
           setCurrentLlmResponse(llmResponseString);
         }
       }
+      
+      // Mark as completed if we exit the loop
+      searchCompleted = true;
+      
     } catch (error) {
       console.error("Error streaming data for user message:", error);
+      searchCompleted = true; // Still save even if there was an error
+    } finally {
+      // Save search to history AFTER the search completes
+      if (searchCompleted && user && payload.message.trim()) {
+        // Use setTimeout to defer this even further
+        setTimeout(async () => {
+          try {
+            await saveSearch(payload.message);
+            console.log('Search saved to history:', payload.message);
+          } catch (error) {
+            console.error('Error saving search to history:', error);
+          }
+        }, 100); // Small delay to ensure UI updates first
+      }
     }
   };
   const handleFileUpload = (file: File) => {
