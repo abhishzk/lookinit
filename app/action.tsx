@@ -16,6 +16,8 @@ async function myAction(userMessage: string, mentionTool: string | null, logo: s
   const streamable = createStreamableValue({});
 
   (async () => {
+    try {
+      if (mentionTool) {
     await checkRateLimit(streamable);
 
     await initializeSemanticCache();
@@ -29,7 +31,7 @@ async function myAction(userMessage: string, mentionTool: string | null, logo: s
     if (mentionTool) {
       await lookupTool(mentionTool, userMessage, streamable, file);
     }
-
+} else {
     const [images, sources, videos, conditionalFunctionCallUI] = await Promise.all([
       getImages(userMessage),
       getSearchResults(userMessage),
@@ -60,7 +62,15 @@ async function myAction(userMessage: string, mentionTool: string | null, logo: s
       semanticCacheKey: userMessage
     });
 
-    streamable.done({ status: 'done' });
+    }
+    } catch (error) {
+      console.error('Action error:', error);
+      try {
+        streamable.done({ llmResponseEnd: true });
+      } catch (closeError) {
+        console.error('Error closing stream:', closeError);
+      }
+    }
   })();
 
   return streamable.value;
