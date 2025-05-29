@@ -20,6 +20,6 @@ export const mentionToolConfig = {
         // Bright Data - Targeted Web Scraping
         { id: 'bright-data-web-unlock', name: 'Bright Data - Web Unlock / Puppeteer', logo: './bright-data-logo.png', functionName: 'brightDataWebScraper', enableRAG: false },
         // DeepSeek
-        { id: 'deepseek-r1-distill-qwen-32b', name: 'DeepSeek', logo: 'https://example.com/deepseek-logo.png', functionName: 'streamChatCompletion', enableRAG: true },
+        { id: 'deepseek-r1-distill-llama-70b', name: 'DeepSeek', logo: 'https://avatars.githubusercontent.com/u/148330874?s=200&v=4', functionName: 'streamChatCompletion', enableRAG: true },
     ],
 };
