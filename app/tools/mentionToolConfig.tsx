@@ -6,6 +6,10 @@ export const mentionToolConfig = {
         { id: 'llama3-8b-8192', name: 'Groq Llama3-8b-8192', logo: 'https://asset.brandfetch.io/idxygbEPCQ/idzCyF-I44.png?updated=1668515712972', functionName: 'streamChatCompletion', enableRAG: true },
         { id: 'mistral-saba-24b', name: 'Groq Mistral-Saba-24b', logo: 'https://asset.brandfetch.io/idxygbEPCQ/idzCyF-I44.png?updated=1668515712972', functionName: 'streamChatCompletion', enableRAG: true },
         
+        // DeepSeek
+        { id: 'deepseek-r1-distill-llama-70b', name: 'DeepSeek', logo: 'https://avatars.githubusercontent.com/u/148330874?s=200&v=4', functionName: 'streamChatCompletion', enableRAG: true },
+    
+        
         // AI Gateway + Portkey --- ANTHROPIC
         { id: 'anthropic.claude-3-sonnet-20240229-v1:0', name: 'Anthropic Claude 3 Sonnet', logo: 'https://asset.brandfetch.io/idmJWF3N06/idq0tv4tfX.svg?updated=1693981852273', functionName: 'portKeyAIGateway', enableRAG: true },
         { id: 'anthropic.claude-3-haiku-20240307-v1:0', name: 'Anthropic Claude 3 Haiku', logo: 'https://asset.brandfetch.io/idmJWF3N06/idq0tv4tfX.svg?updated=1693981852273', functionName: 'portKeyAIGateway', enableRAG: true },
@@ -26,7 +30,5 @@ export const mentionToolConfig = {
         // Bright Data - Targeted Web Scraping (Updated description)
         { id: 'bright-data-web-unlock', name: 'Bright Data - Web Scraper (Works without OpenAI)', logo: './bright-data-logo.png', functionName: 'brightDataWebScraper', enableRAG: false },
         
-        // DeepSeek
-        { id: 'deepseek-r1-distill-llama-70b', name: 'DeepSeek', logo: 'https://avatars.githubusercontent.com/u/148330874?s=200&v=4', functionName: 'streamChatCompletion', enableRAG: true },
-    ],
+        ],
 };
