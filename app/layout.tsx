@@ -10,6 +10,7 @@ import { AI } from './action';
 import { Header } from '@/components/header';
 import { Providers } from '@/components/providers';
 import { AuthProvider } from '@/lib/auth-context';
+import { ThemeProvider } from '@/lib/theme-context';
 
 const meta = {
   title: 'Results, simple and smart.',
@@ -60,20 +61,22 @@ export default function RootLayout({
         <Toaster />
         <AuthProvider>
           <AI>
-            <Providers
-              attribute="class"
-              defaultTheme="system"
-              enableSystem
-              disableTransitionOnChange
-            >
-              <div className="flex flex-col min-h-screen">
-                <Header />
-                <main className="flex flex-col flex-1 bg-muted/50 dark:bg-background px-4 pb-16">
-                  {children}
-                </main>
-              </div>
-              <Footer />
-            </Providers>
+            <ThemeProvider>
+              <Providers
+                attribute="class"
+                defaultTheme="system"
+                enableSystem
+                disableTransitionOnChange
+              >
+                <div className="flex flex-col min-h-screen">
+                  <Header />
+                  <main className="flex flex-col flex-1 bg-muted/50 dark:bg-background px-4 pb-16">
+                    {children}
+                  </main>
+                </div>
+                <Footer />
+              </Providers>
+            </ThemeProvider>
           </AI>
         </AuthProvider>
         <Analytics />
@@ -81,5 +84,4 @@ export default function RootLayout({
     </html>
   );
 }
-
 export const runtime = 'edge';

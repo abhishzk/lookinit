@@ -2,12 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Sidebar as SidebarIcon, GoogleLogo, UserCircle } from '@phosphor-icons/react';
+import { Sidebar as SidebarIcon, GoogleLogo, UserCircle, Sun, Moon, Monitor } from '@phosphor-icons/react';
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth-context';
 import { UserAvatar } from './UserAvatar';
 import { Sidebar } from './Sidebar';
+import { useTheme } from '@/lib/theme-context';
 
 export function Header() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -17,6 +18,7 @@ export function Header() {
 
   // Use the auth hook instead of managing state locally
   const { user, loading, signInWithGoogle, logout } = useAuth();
+  const { theme, setTheme, actualTheme } = useTheme();
 
   const handleSelectHistoryQuery = (query: string) => {
     window.dispatchEvent(new CustomEvent('set-search-query', {
@@ -45,6 +47,19 @@ export function Header() {
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
+  };
+
+  const getThemeIcon = (themeType: string) => {
+    switch (themeType) {
+      case 'light':
+        return <Sun size={18} className="text-orange-500" />;
+      case 'dark':
+        return <Moon size={18} className="text-yellow-500" />;
+      case 'system':
+        return <Monitor size={18} className="text-gray-500" />;
+      default:
+        return <Monitor size={18} className="text-gray-500" />;
+    }
   };
 
   useEffect(() => {
@@ -146,6 +161,60 @@ export function Header() {
                       Upgrade to Pro
                     </Link>
                   </DropdownMenu.Item>
+
+                  {/* Theme Selection Sub-menu */}
+                  <DropdownMenu.Sub>
+                    <DropdownMenu.SubTrigger className="p-2 hover:dark:bg-[#3b3e41] hover:bg-gray-300 rounded-md cursor-pointer flex items-center gap-2 text-black dark:text-white w-full">
+                      {getThemeIcon(actualTheme)}
+                      Theme
+                      <svg className="ml-auto h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </DropdownMenu.SubTrigger>
+                    
+                    <DropdownMenu.Portal>
+                      <DropdownMenu.SubContent
+                        className="w-36 bg-white dark:bg-[#282a2c] border border-gray-200 dark:border-gray-700 rounded-md shadow-lg p-1 z-[1001]"
+                        sideOffset={5}
+                      >
+                        <DropdownMenu.Item
+                          onClick={() => setTheme('light')}
+                          className={`
+                            flex items-center gap-2 p-2 rounded-md cursor-pointer text-sm
+                            hover:bg-gray-100 dark:hover:bg-gray-700 text-black dark:text-white
+                            ${theme === 'light' ? 'bg-gray-100 dark:bg-gray-700' : ''}
+                          `}
+                        >
+                          <Sun size={16} className="text-orange-500" />
+                          Light
+                        </DropdownMenu.Item>
+
+                        <DropdownMenu.Item
+                          onClick={() => setTheme('dark')}
+                          className={`
+                            flex items-center gap-2 p-2 rounded-md cursor-pointer text-sm
+                            hover:bg-gray-100 dark:hover:bg-gray-700 text-black dark:text-white
+                            ${theme === 'dark' ? 'bg-gray-100 dark:bg-gray-700' : ''}
+                          `}
+                        >
+                          <Moon size={16} className="text-yellow-500" />
+                          Dark
+                        </DropdownMenu.Item>
+
+                        <DropdownMenu.Item
+                          onClick={() => setTheme('system')}
+                          className={`
+                            flex items-center gap-2 p-2 rounded-md cursor-pointer text-sm
+                            hover:bg-gray-100 dark:hover:bg-gray-700 text-black dark:text-white
+                            ${theme === 'system' ? 'bg-gray-100 dark:bg-gray-700' : ''}
+                          `}
+                        >
+                          <Monitor size={16} className="text-gray-500" />
+                          System
+                        </DropdownMenu.Item>
+                      </DropdownMenu.SubContent>
+                    </DropdownMenu.Portal>
+                  </DropdownMenu.Sub>
 
                   <DropdownMenu.Separator className="h-px bg-gray-200 dark:bg-gray-700 my-1" />
 

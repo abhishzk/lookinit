@@ -5,6 +5,7 @@ import SearchHistory from '@/components/SearchHistory';
 import { Clock, NotePencil, X, UserCircle } from '@phosphor-icons/react';
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth-context';
+import { ThemeToggle } from './ThemeToggle';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -46,12 +47,6 @@ export function Sidebar({ isOpen, onClose, onSelectHistoryQuery }: SidebarProps)
                 </svg>
                 Upgrade to Pro
               </Link>
-
-              {/* Add your new features here */}
-              {/* Example: */}
-              {/* <Link href="/settings" className="flex items-center gap-2 p-2 hover:dark:bg-[#3b3e41] rounded-md text-black dark:text-white hover:bg-gray-100">
-                <SettingsIcon size={24} className="text-black dark:text-white" /> Settings
-              </Link> */}
             </nav>
           </div>
 
