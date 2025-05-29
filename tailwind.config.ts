@@ -7,8 +7,8 @@ const config: Config = {
     './app/**/*.{js,ts,jsx,tsx,mdx}',
     './components/**/*.{js,ts,jsx,tsx}',
     './ai_hooks/**/*.{js,ts,jsx,tsx}',
-    
   ],
+  darkMode: 'class', // Add this line for class-based dark mode
   theme: {
     extend: {
       fontFamily: {
