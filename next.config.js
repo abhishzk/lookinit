@@ -26,6 +26,24 @@ const nextConfig = {
     }
     return config;
   },
+  images: {
+    domains: ['ui-avatars.com'],
+    // Or use the newer remotePatterns (Next.js 12.3+)
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'picsum.photos',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'ui-avatars.com',
+        port: '',
+        pathname: '/api/**',
+      },
+    ],
+  },
 };
 
 module.exports = nextConfig;
