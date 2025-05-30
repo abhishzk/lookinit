@@ -133,10 +133,10 @@ const BlogContent = ({ blogDetails }: { blogDetails: BlogPost }) => {
         : `https://ui-avatars.com/api/?name=Unknown&background=random`;
 
     return (
-        <section className="relative min-h-screen overflow-hidden bg-gradient-to-br from-purple-50 via-violet-50 to-indigo-100 dark:from-gray-900 dark:via-purple-900/20 dark:to-indigo-900/20">
+        <section className="relative min-h-screen overflow-hidden bg-gradient-to-br from-rose-50 via-pink-50 to-fuchsia-100 dark:from-gray-900 dark:via-gray-900/20 dark:to-pink-900/20">
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                <div className="absolute right-[5%] bottom-[15%] h-64 w-64 animate-[float_14s_ease-in-out_infinite_reverse] rounded-full bg-gradient-to-r from-purple-200/50 to-violet-200/50 blur-[80px] dark:from-purple-800/30 dark:to-violet-800/30"></div>
-                <div className="absolute left-[5%] top-[15%] h-60 w-60 animate-[float_12s_ease-in-out_infinite] rounded-full bg-gradient-to-r from-indigo-200/50 to-purple-200/50 blur-[80px] dark:from-indigo-800/30 dark:to-purple-800/30"></div>
+                <div className="absolute right-[5%] bottom-[15%] h-64 w-64 animate-[float_14s_ease-in-out_infinite_reverse] rounded-full bg-gradient-to-r from-rose-200/50 to-pink-200/50 blur-[80px] dark:from-rose-800/30 dark:to-pink-800/30"></div>
+                <div className="absolute left-[5%] top-[15%] h-60 w-60 animate-[float_12s_ease-in-out_infinite] rounded-full bg-gradient-to-r from-pink-200/50 to-fuchsia-200/50 blur-[80px] dark:from-pink-800/30 dark:to-fuchsia-800/30"></div>
 
                 {[...Array(12)].map((_, i) => (
                     <div
@@ -157,7 +157,7 @@ const BlogContent = ({ blogDetails }: { blogDetails: BlogPost }) => {
             <div className="container relative z-10">
                 <div className="-mx-4 flex flex-wrap justify-center">
                     <div className="w-full px-4 lg:w-10/12 xl:w-8/12">
-                        <div className="rounded-2xl bg-white/90 p-10 shadow-2xl backdrop-blur-md border border-purple-100/50 dark:bg-gray-800/90 dark:border-purple-900/30">
+                        <div className="rounded-2xl bg-gradient-to-br from-[#282a2c] via-purple-50 to-fuchsia-100 p-10 shadow-2xl backdrop-blur-md border-2 border-[#282a2c] dark:bg-gradient-to-br dark:from-[#282a2c]/90 dark:via-gray-900/60 dark:to-black dark:border-[#282a2c] ring-2 ring-[#282a2c]/30 dark:ring-[#282a2c]/40">
                             <h1 className="mb-8 text-4xl font-bold leading-tight text-black dark:text-white sm:text-5xl sm:leading-tight">
                                 {blogDetails.title}
                             </h1>
@@ -201,7 +201,7 @@ const BlogContent = ({ blogDetails }: { blogDetails: BlogPost }) => {
 
                                 <div className="mb-5">
                                     {blogDetails.tags?.length > 0 && (
-                                        <span className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-primary to-primary/80 px-5 py-2 text-sm font-semibold text-white shadow-md">
+                                        <span className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-primary to-primary/80 px-5 py-2 text-sm font-semibold text-black shadow-md">
                                             {blogDetails.tags[0]}
                                         </span>
                                     )}
@@ -266,8 +266,8 @@ const BlogContent = ({ blogDetails }: { blogDetails: BlogPost }) => {
                                                 <code
                                                     {...props}
                                                     className={`${inline
-                                                            ? "px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded text-sm"
-                                                            : "block p-4 bg-gray-100 dark:bg-gray-800 rounded-lg text-sm my-4 overflow-x-auto"
+                                                        ? "px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded text-sm"
+                                                        : "block p-4 bg-gray-100 dark:bg-gray-800 rounded-lg text-sm my-4 overflow-x-auto"
                                                         }`}
                                                 />
                                             ),

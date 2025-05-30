@@ -20,7 +20,7 @@ export default function LoginPage() {
     // Simulate network delay for premium feel
     await new Promise(resolve => setTimeout(resolve, 800));
     
-    if (email === 'admin@speeir.com' && password === 'admin@123') {
+    if (email === 'admin@lookinit.com' && password === 'lookinit@123') {
       localStorage.setItem('isAuthenticated', 'true');
       router.push('/admin');
     } else {
@@ -137,7 +137,7 @@ export default function LoginPage() {
 
             <div className="pt-4 mt-4 border-t border-gray-100 dark:border-gray-700">
               <p className="text-xs text-center text-gray-500 dark:text-gray-400">
-                 Secure access powered by Speeir
+                 Secure access powered by Lookinit
               </p>
             </div>
           </div>

@@ -10,31 +10,31 @@ export async function generateMetadata({
 
   if (!id) {
     return {
-      title: "Blog Not Found | Speeir",
+      title: "Blog Not Found | Lookinit",
       description: "We couldn't find the blog you're looking for.",
       robots: "noindex, nofollow",
     };
   }
 
   try {
-    const res = await fetch(`https://speeir.com/api/blog/${id}`, {
+    const res = await fetch(`https://lookinit.com/api/blog/${id}`, {
       next: { revalidate: 60 }, // Optional: cache for 60s
     });
     const blog = await res.json();
     const { title, description, author, publishedAt, image } = blog.data;
 
-    const blogUrl = `https://speeir.com/blog-details?id=${id}`;
+    const blogUrl = `https://lookinit.com/blog-details?id=${id}`;
 
 
     return {
-      title: `${title} | Speeir`,
+      title: `${title} | Lookinit`,
       description,
       alternates: {
         canonical: blogUrl,
       },
       openGraph: {
         type: "article",
-        title: `${title} | Speeir`,
+        title: `${title} | Lookinit`,
         description,
         url: blogUrl,
         images: [{ url: image }],
@@ -44,7 +44,7 @@ export async function generateMetadata({
     };
   } catch (error) {
     return {
-      title: "Blog Error | Lookinit",
+      title: "Blog",
       description: "An error occurred while loading the blog.",
       robots: "noindex, nofollow",
     };

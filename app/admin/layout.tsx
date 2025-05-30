@@ -31,15 +31,15 @@ export default function AdminLayout({
   return (
     <ThemeProvider attribute="class" defaultTheme="dark">
       <head>
-        <link rel="canonical" href="https://www.speeir.com/admin" />
+        <link rel="canonical" href="https://www.lookinit.com/admin" />
         <meta name="robots" content="noindex, nofollow" />
         <script type="application/ld+json">
           {JSON.stringify({
             "@context": "https://schema.org",
             "@type": "WebPage",
             "name": "Admin Dashboard",
-            "url": "https://www.speeir.com/admin",
-            "description": "Admin dashboard for managing Speeir content and analytics."
+            "url": "https://www.lookinit.com/admin",
+            "description": "Admin dashboard for managing Lookinit content and analytics."
           })}
         </script>
       </head>

@@ -4,9 +4,9 @@ import Blog from "./BlogClient";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Blog | Speeir",
-  description: "Stay updated with the latest insights, trends, and news from Speeir's blog.",
-  keywords: "blog, articles, Ireland, Speeir, web development, application development, software solutions",
+  title: "Blog | Lookinit",
+  description: "Discover how Lookinit can empower your business, streamline workflows, and drive innovation. Explore use cases, solutions, and success stories tailored for your needs.",
+  keywords: "Lookinit, use cases, solutions, business, innovation, workflow, success stories, AI, software",
   robots: "index, follow",
 };
 
