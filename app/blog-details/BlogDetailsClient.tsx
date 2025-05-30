@@ -133,15 +133,15 @@ const BlogContent = ({ blogDetails }: { blogDetails: BlogPost }) => {
         : `https://ui-avatars.com/api/?name=Unknown&background=random`;
 
     return (
-        <section className="relative min-h-screen overflow-hidden bg-gradient-to-br from-orange-50 via-white to-pink-50 dark:from-gray-900 dark:via-orange-900/20 dark:to-gray-800">
-            <div className="absolute inset-0 overflow-hidden pointer-events-none bg-gradient-to-r from-blue-500/20 to-black-500/20 blur-[80px]">
-                <div className="absolute right-[5%] bottom-[15%] h-64 w-64 animate-[float_14s_ease-in-out_infinite_reverse] rounded-full bg-gradient-to-r from-green-50/50 to-teal-50/50 blur-[80px] dark:from-green-900/20 dark:to-teal-900/20"></div>
-                <div className="absolute left-[5%] top-[15%] h-60 w-60 animate-[float_12s_ease-in-out_infinite] rounded-full bg-gradient-to-r from-blue-50/50 to-purple-50/50 blur-[80px] dark:from-blue-900/20 dark:to-purple-900/20"></div>
+        <section className="relative min-h-screen overflow-hidden bg-gradient-to-br from-purple-50 via-violet-50 to-indigo-100 dark:from-gray-900 dark:via-purple-900/20 dark:to-indigo-900/20">
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                <div className="absolute right-[5%] bottom-[15%] h-64 w-64 animate-[float_14s_ease-in-out_infinite_reverse] rounded-full bg-gradient-to-r from-purple-200/50 to-violet-200/50 blur-[80px] dark:from-purple-800/30 dark:to-violet-800/30"></div>
+                <div className="absolute left-[5%] top-[15%] h-60 w-60 animate-[float_12s_ease-in-out_infinite] rounded-full bg-gradient-to-r from-indigo-200/50 to-purple-200/50 blur-[80px] dark:from-indigo-800/30 dark:to-purple-800/30"></div>
 
                 {[...Array(12)].map((_, i) => (
                     <div
                         key={i}
-                        className="absolute rounded-full bg-gray-300/30 dark:bg-gray-600/30"
+                        className="absolute rounded-full bg-purple-300/20 dark:bg-purple-600/20"
                         style={{
                             width: `${Math.random() * 12 + 4}px`,
                             height: `${Math.random() * 12 + 4}px`,
@@ -157,7 +157,7 @@ const BlogContent = ({ blogDetails }: { blogDetails: BlogPost }) => {
             <div className="container relative z-10">
                 <div className="-mx-4 flex flex-wrap justify-center">
                     <div className="w-full px-4 lg:w-10/12 xl:w-8/12">
-                        <div className="rounded-2xl bg-white/80 p-10 shadow-xl backdrop-blur-sm dark:bg-black-900/90 dark:shadow-gray-800/10">
+                        <div className="rounded-2xl bg-white/90 p-10 shadow-2xl backdrop-blur-md border border-purple-100/50 dark:bg-gray-800/90 dark:border-purple-900/30">
                             <h1 className="mb-8 text-4xl font-bold leading-tight text-black dark:text-white sm:text-5xl sm:leading-tight">
                                 {blogDetails.title}
                             </h1>
@@ -262,12 +262,12 @@ const BlogContent = ({ blogDetails }: { blogDetails: BlogPost }) => {
                                                     rel="noopener noreferrer"
                                                 />
                                             ),
-                                            code: ({ node, inline, ...props }: { node: any; inline?: boolean;[key: string]: any }) => (
+                                            code: ({ node, inline, ...props }: { node?: any; inline?: boolean;[key: string]: any }) => (
                                                 <code
                                                     {...props}
                                                     className={`${inline
-                                                        ? "px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded text-sm"
-                                                        : "block p-4 bg-gray-100 dark:bg-gray-800 rounded-lg text-sm my-4 overflow-x-auto"
+                                                            ? "px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded text-sm"
+                                                            : "block p-4 bg-gray-100 dark:bg-gray-800 rounded-lg text-sm my-4 overflow-x-auto"
                                                         }`}
                                                 />
                                             ),
@@ -319,6 +319,7 @@ const BlogContent = ({ blogDetails }: { blogDetails: BlogPost }) => {
                                     >
                                         {blogDetails.content}
                                     </ReactMarkdown>
+
                                 </div>
 
                                 <div className="mt-12 items-center justify-between sm:flex">
