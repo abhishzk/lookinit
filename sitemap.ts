@@ -1,7 +1,6 @@
 // app/sitemap.ts
 export const revalidate = 86400; // 24 hours
 import { MetadataRoute } from 'next';
-import { services } from "./data/services";
 
 interface Service {
   slug: string;
@@ -51,13 +50,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   try {
-    // Map services
-    const servicesRoutes: MetadataRoute.Sitemap = services.map((service) => ({
-      url: `${baseUrl}/services/${service.slug}`,
-      lastModified: new Date(service.updatedAt ?? now).toISOString(),
-      changeFrequency: 'weekly',
-      priority: 0.8,
-    }));
+
 
     // Fetch blogs
     const res = await fetch(`${baseUrl}/api/blog`, {
@@ -73,7 +66,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.6,
     }));
 
-    return [...staticRoutes, ...servicesRoutes, ...blogRoutes];
+    return [...staticRoutes, ...blogRoutes];
 
   } catch (error) {
     console.error('[SITEMAP ERROR]:', error);
