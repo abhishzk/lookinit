@@ -1,5 +1,5 @@
 import { auth } from '@/lib/firebase';
-import { getFirestore, collection, addDoc, query, where, orderBy, limit, getDocs, deleteDoc, doc } from 'firebase/firestore';
+import { getFirestore, collection, query, where, orderBy, limit, getDocs, deleteDoc, doc } from 'firebase/firestore';
 
 export interface SearchHistoryItem {
   id: string;
@@ -14,7 +14,10 @@ const db = getFirestore();
 // Fetch search history
 export async function fetchSearchHistory(): Promise<SearchHistoryItem[]> {
   const user = auth.currentUser;
-  if (!user) return [];
+  if (!user) {
+    console.log('❌ No user authenticated for fetching history');
+    return [];
+  }
   
   try {
     const historyQuery = query(
@@ -25,67 +28,81 @@ export async function fetchSearchHistory(): Promise<SearchHistoryItem[]> {
     );
     
     const snapshot = await getDocs(historyQuery);
-    return snapshot.docs.map(doc => ({ 
+    const history = snapshot.docs.map(doc => ({ 
       id: doc.id, 
       ...doc.data() 
     } as SearchHistoryItem));
-  } catch (error) {
-    console.error('Error fetching search history:', error);
-    return [];
-  }
-}
-
-// Save search to history
-export async function saveSearch(query: string): Promise<string | null> {
-  const user = auth.currentUser;
-  if (!user) return null;
-  
-  try {
-    const historyItem = {
-      userId: user.uid,
-      query,
-      timestamp: Date.now()
-    };
     
-    const docRef = await addDoc(collection(db, 'searchHistory'), historyItem);
-    return docRef.id;
+    console.log('✅ Fetched search history:', history.length, 'items');
+    return history;
   } catch (error) {
-    console.error('Error saving search:', error);
-    return null;
+    console.error('❌ Error fetching search history:', error);
+    return [];
   }
 }
 
 // Delete search history item
 export async function deleteSearchItem(id: string): Promise<boolean> {
   const user = auth.currentUser;
-  if (!user) return false;
+  if (!user) {
+    console.log('❌ No user authenticated for deleting item');
+    return false;
+  }
   
   try {
     await deleteDoc(doc(db, 'searchHistory', id));
+    console.log('✅ Search item deleted:', id);
     return true;
   } catch (error) {
-    console.error('Error deleting search item:', error);
+    console.error('❌ Error deleting search item:', error);
     return false;
   }
 }
 
-// Clear search history
+// Clear all search history
 export async function clearSearchHistory(): Promise<boolean> {
   const user = auth.currentUser;
-  if (!user) return false;
+  if (!user) {
+    console.log('❌ No user authenticated for clearing history');
+    return false;
+  }
   
   try {
     const historyItems = await fetchSearchHistory();
     
-    // Delete each item one by one
+    if (historyItems.length === 0) {
+      console.log('✅ No history items to clear');
+      return true;
+    }
+    
     const deletePromises = historyItems.map(item => 
       deleteDoc(doc(db, 'searchHistory', item.id))
     );
     
     await Promise.all(deletePromises);
+    console.log('✅ Search history cleared:', historyItems.length, 'items deleted');
     return true;
   } catch (error) {
-    console.error('Error clearing search history:', error);
+    console.error('❌ Error clearing search history:', error);
     return false;
+  }
+}
+
+// Get search history count for a user
+export async function getSearchHistoryCount(): Promise<number> {
+  const user = auth.currentUser;
+  if (!user) return 0;
+  
+  try {
+    const historyQuery = query(
+      collection(db, 'searchHistory'),
+      where('userId', '==', user.uid)
+    );
+    
+    const snapshot = await getDocs(historyQuery);
+    return snapshot.size;
+  } catch (error) {
+    console.error('❌ Error getting search history count:', error);
+    return 0;
   }
 }
