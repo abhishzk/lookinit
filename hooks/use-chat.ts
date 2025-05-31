@@ -110,11 +110,18 @@ export function useChat() {
     hasSubscription: boolean
   ) => {
     console.log('🚀 Starting search for:', payload.message);
+    console.log('🔍 Environment check:', {
+      isDev: process.env.NODE_ENV === 'development',
+      hasUser: !!user,
+      userUid: user?.uid,
+      hasSubscription,
+      mentionTool: payload.mentionTool
+    });
 
     // Search limit check
     if (!hasSubscription && isSearchLimitReached(user?.uid)) {
       console.log('🚫 Search limit reached');
-      const paymentPromptMessage = {
+      const paymentPromptMessage: Message = {
         id: Date.now(),
         type: 'paymentPrompt',
         userMessage: '',
@@ -128,15 +135,21 @@ export function useChat() {
         falBase64Image: null,
         logo: undefined,
         semanticCacheKey: null,
-        cachedData: ''
+        cachedData: '',
+        searchResults: [],
+        places: [],
+        shopping: [],
+        ticker: undefined,
+        spotify: undefined
       };
-      setMessages(prevMessages => [...prevMessages, { ...paymentPromptMessage }]);
+      setMessages(prevMessages => [...prevMessages, paymentPromptMessage]);
       return;
     }
 
     // Increment search count
     if (!hasSubscription && user) {
       const newCount = incrementSearchCount(user?.uid);
+      console.log('📊 Search count incremented to:', newCount);
       if (newCount < SEARCH_LIMIT) {
         toast({
           title: `Search ${newCount} of ${SEARCH_LIMIT}`,
@@ -147,6 +160,8 @@ export function useChat() {
     }
 
     const newMessageId = Date.now();
+    console.log('📝 Creating message with ID:', newMessageId);
+    
     const newMessage: Message = {
       id: newMessageId,
       type: 'userMessage',
@@ -169,56 +184,124 @@ export function useChat() {
       logo: payload.logo || undefined,
     };
 
-    setMessages(prevMessages => [...prevMessages, newMessage]);
+    setMessages(prevMessages => {
+      console.log('📋 Adding message to state, current count:', prevMessages.length);
+      return [...prevMessages, newMessage];
+    });
     
     let lastAppendedResponse = "";
     
     try {
-      const streamableValue = await myAction(payload.message, payload.mentionTool, payload.logo, payload.file);
-      let llmResponseString = "";
+      console.log('🔄 Calling myAction with:', {
+        message: payload.message,
+        mentionTool: payload.mentionTool,
+        logo: payload.logo,
+        file: payload.file
+      });
+      
+      // Add this right after the myAction call to help debug production issues
+const streamableValue = await myAction(payload.message, payload.mentionTool, payload.logo, payload.file);
+console.log('✅ myAction returned streamableValue:', !!streamableValue);
+console.log('🔍 StreamableValue type:', typeof streamableValue);
+console.log('🔍 StreamableValue constructor:', streamableValue?.constructor?.name);
 
+      if (!streamableValue) {
+        console.error('❌ myAction returned null/undefined streamableValue');
+        return;
+      }
+      
+      let llmResponseString = "";
+      let messageCount = 0;
+
+      console.log('🔄 Starting to read stream...');
       for await (const message of readStreamableValue(streamableValue)) {
+        messageCount++;
+        console.log(`📨 Stream message #${messageCount}:`, {
+          hasMessage: !!message,
+          messageType: typeof message,
+          keys: message ? Object.keys(message) : [],
+          hasLlmResponse: message && typeof message === 'object' && 'llmResponse' in message,
+          hasSearchResults: message && typeof message === 'object' && 'searchResults' in message,
+          hasImages: message && typeof message === 'object' && 'images' in message,
+          hasVideos: message && typeof message === 'object' && 'videos' in message,
+          llmResponseEnd: message && typeof message === 'object' && 'llmResponseEnd' in message ? message.llmResponseEnd : undefined,
+          status: message && typeof message === 'object' && 'status' in message ? message.status : undefined
+        });
+        
         const typedMessage = message as StreamMessage;
         
         setMessages((prevMessages) => {
           const messagesCopy = [...prevMessages];
           const messageIndex = messagesCopy.findIndex(msg => msg.id === newMessageId);
           
-          if (messageIndex !== -1) {
-            const currentMessage = messagesCopy[messageIndex];
+          if (messageIndex === -1) {
+            console.error('❌ Could not find message with ID:', newMessageId);
+            return messagesCopy;
+          }
+          
+          const currentMessage = messagesCopy[messageIndex];
+          console.log('🔄 Updating message:', {
+            messageId: newMessageId,
+            currentContentLength: currentMessage.content.length,
+            currentSearchResults: currentMessage.searchResults?.length ?? 0,
+            currentImages: currentMessage.images?.length ?? 0,
+            isStreaming: currentMessage.isStreaming
+          });
 
-            if (typedMessage.status === 'rateLimitReached') {
-              currentMessage.status = 'rateLimitReached';
-            }
+          if (typedMessage.status === 'rateLimitReached') {
+            console.log('🚫 Rate limit reached');
+            currentMessage.status = 'rateLimitReached';
+          }
 
-            if (typedMessage.isolatedView) {
-              currentMessage.isolatedView = true;
-            }
+          if (typedMessage.isolatedView) {
+            currentMessage.isolatedView = true;
+          }
 
-            if (typedMessage.llmResponse && typedMessage.llmResponse !== lastAppendedResponse) {
-              currentMessage.content += typedMessage.llmResponse;
-              lastAppendedResponse = typedMessage.llmResponse;
-            }
+          if (typedMessage.llmResponse && typedMessage.llmResponse !== lastAppendedResponse) {
+            currentMessage.content += typedMessage.llmResponse;
+            lastAppendedResponse = typedMessage.llmResponse;
+            console.log('📝 Added LLM response, new length:', currentMessage.content.length);
+          }
 
-            if (typedMessage.llmResponseEnd) {
-              currentMessage.isStreaming = false;
-            }
+          if (typedMessage.llmResponseEnd) {
+            console.log('🏁 LLM response ended, setting isStreaming to false');
+            currentMessage.isStreaming = false;
+          }
 
-            currentMessage.searchResults = typedMessage.searchResults || currentMessage.searchResults;
-            currentMessage.images = typedMessage.images ? [...typedMessage.images] : currentMessage.images;
-            currentMessage.videos = typedMessage.videos ? [...typedMessage.videos] : currentMessage.videos;
-            currentMessage.followUp = typedMessage.followUp || currentMessage.followUp;
-            currentMessage.falBase64Image = typedMessage.falBase64Image;
+          if (typedMessage.searchResults) {
+            currentMessage.searchResults = typedMessage.searchResults;
+            console.log('🔍 Updated search results:', typedMessage.searchResults.length);
+          }
 
-            if (typedMessage.conditionalFunctionCallUI) {
-              const functionCall = typedMessage.conditionalFunctionCallUI;
-              if (functionCall.type === 'places') currentMessage.places = functionCall.places;
-              if (functionCall.type === 'shopping') currentMessage.shopping = functionCall.shopping;
-              if (functionCall.type === 'ticker') currentMessage.ticker = functionCall.data;
-              if (functionCall.trackId) currentMessage.spotify = functionCall.trackId;
-            }
+          if (typedMessage.images) {
+            currentMessage.images = [...typedMessage.images];
+            console.log('🖼️ Updated images:', typedMessage.images.length);
+          }
 
-            if (typedMessage.cachedData) {
+          if (typedMessage.videos) {
+            currentMessage.videos = [...typedMessage.videos];
+            console.log('🎥 Updated videos:', typedMessage.videos.length);
+          }
+
+          if (typedMessage.followUp) {
+            currentMessage.followUp = typedMessage.followUp;
+            console.log('❓ Updated follow-up questions');
+          }
+
+          currentMessage.falBase64Image = typedMessage.falBase64Image;
+
+          if (typedMessage.conditionalFunctionCallUI) {
+            const functionCall = typedMessage.conditionalFunctionCallUI;
+            console.log('🔧 Function call UI:', functionCall.type);
+            if (functionCall.type === 'places') currentMessage.places = functionCall.places;
+            if (functionCall.type === 'shopping') currentMessage.shopping = functionCall.shopping;
+            if (functionCall.type === 'ticker') currentMessage.ticker = functionCall.data;
+            if (functionCall.trackId) currentMessage.spotify = functionCall.trackId;
+          }
+
+          if (typedMessage.cachedData) {
+            console.log('💾 Processing cached data');
+            try {
               const data = JSON.parse(typedMessage.cachedData);
               Object.assign(currentMessage, {
                 searchResults: data.searchResults,
@@ -238,23 +321,45 @@ export function useChat() {
                 if (functionCall.type === 'ticker') currentMessage.ticker = functionCall.data;
                 if (functionCall.trackId) currentMessage.spotify = functionCall.trackId;
               }
+              console.log('✅ Cached data processed successfully');
+            } catch (error) {
+              console.error('❌ Error parsing cached data:', error);
             }
           }
+
           return messagesCopy;
-        });
-        
+
+        });        
         if (typedMessage.llmResponse) {
           llmResponseString += typedMessage.llmResponse;
           setCurrentLlmResponse(llmResponseString);
         }
       }
       
+      console.log(`✅ Stream completed after ${messageCount} messages`);
+      
     } catch (error) {
       console.error("❌ Error during search:", error);
+      console.error("Error details:", {
+        name: (error as Error).name,
+        message: (error as Error).message,
+        stack: (error as Error).stack
+      });
+      
+      // Update message to show error state
+      setMessages((prevMessages) => {
+        const messagesCopy = [...prevMessages];
+        const messageIndex = messagesCopy.findIndex(msg => msg.id === newMessageId);
+        if (messageIndex !== -1) {
+          messagesCopy[messageIndex].isStreaming = false;
+          messagesCopy[messageIndex].content = 'An error occurred while processing your search. Please try again.';
+          messagesCopy[messageIndex].status = 'error';
+        }
+        return messagesCopy;
+      });
     }
     
   }, [myAction, toast]);
-
   const handleFollowUpClick = useCallback(async (question: string, user: User | null, hasSubscription: boolean, file: string) => {
     setCurrentLlmResponse('');
     await handleUserMessageSubmission({ 
