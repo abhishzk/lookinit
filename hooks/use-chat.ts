@@ -220,6 +220,7 @@ console.log('🔍 StreamableValue constructor:', streamableValue?.constructor?.n
           hasMessage: !!message,
           messageType: typeof message,
           keys: message ? Object.keys(message) : [],
+          fullMessage: message,
           hasLlmResponse: message && typeof message === 'object' && 'llmResponse' in message,
           hasSearchResults: message && typeof message === 'object' && 'searchResults' in message,
           hasImages: message && typeof message === 'object' && 'images' in message,
