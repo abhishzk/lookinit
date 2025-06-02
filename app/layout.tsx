@@ -21,7 +21,7 @@ export const metadata: Metadata = {
   ...meta,
   title: {
     default: 'Lookinit',
-    template: `%s - Lookinit`,
+    template: '%s - Lookinit',
   },
   icons: {
     icon: '/favicon.ico',
@@ -54,10 +54,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
-      <body
-        className={`font-sans antialiased ${GeistSans.variable} ${GeistMono.variable}`}
-      >
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+      </head>
+      <body className={`font-sans antialiased ${GeistSans.variable} ${GeistMono.variable}`}>
         <Toaster />
         <AuthProvider>
           <AI>
@@ -84,4 +84,5 @@ export default function RootLayout({
     </html>
   );
 }
+
 export const runtime = 'edge';

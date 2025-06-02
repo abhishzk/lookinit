@@ -15,7 +15,7 @@ const getDb = () => {
   try {
     return getFirestore(auth.app);
   } catch (error) {
-    console.error('❌ Error getting Firestore instance:', error);
+    //console.error('❌ Error getting Firestore instance:', error);
     return null;
   }
 };
@@ -25,13 +25,13 @@ const saveSearch = async (searchQuery: string): Promise<string | null> => {
   const user = auth.currentUser;
   
   if (!user || !searchQuery?.trim()) {
-    console.log('❌ Cannot save search: no user or empty query');
+    //console.log('❌ Cannot save search: no user or empty query');
     return null;
   }
   
   const db = getDb();
   if (!db) {
-    console.error('❌ Firestore not available');
+    //console.error('❌ Firestore not available');
     return null;
   }
   
@@ -42,18 +42,18 @@ const saveSearch = async (searchQuery: string): Promise<string | null> => {
       timestamp: Date.now()
     };
     
-    console.log('💾 Saving search to history:', searchQuery);
+    //console.log('💾 Saving search to history:', searchQuery);
     const docRef = await addDoc(collection(db, 'searchHistory'), historyItem);
-    console.log('✅ Search history saved with ID:', docRef.id);
+    //console.log('✅ Search history saved with ID:', docRef.id);
     return docRef.id;
     
   } catch (error: any) {
-    console.error('❌ Error saving search to history:', error);
+    //console.error('❌ Error saving search to history:', error);
     
     // Log specific Firebase errors for debugging
     if (error.code) {
-      console.error('Firebase error code:', error.code);
-      console.error('Firebase error message:', error.message);
+      //console.error('Firebase error code:', error.code);
+      //console.error('Firebase error message:', error.message);
     }
     
     return null;
@@ -81,7 +81,7 @@ export function useChat() {
         latestMessage.userMessage &&
         !savedMessageIds.current.has(latestMessage.id)) {
       
-      console.log('🎯 Detected completed message, saving to history:', latestMessage.userMessage);
+      //console.log('🎯 Detected completed message, saving to history:', latestMessage.userMessage);
       
       // Mark this message as being processed
       savedMessageIds.current.add(latestMessage.id);
@@ -91,10 +91,10 @@ export function useChat() {
         try {
           const searchId = await saveSearch(latestMessage.userMessage);
           if (searchId) {
-            console.log('✅ Search saved to history successfully');
+            //console.log('✅ Search saved to history successfully');
           }
         } catch (error) {
-          console.error('❌ Failed to save search to history:', error);
+          //console.error('❌ Failed to save search to history:', error);
           // Remove from saved set if save failed so it can be retried
           savedMessageIds.current.delete(latestMessage.id);
         }
@@ -109,11 +109,11 @@ export function useChat() {
     user: User | null,
     hasSubscription: boolean
   ) => {
-    console.log('🚀 Starting search for:', payload.message);
+    //console.log('🚀 Starting search for:', payload.message);
 
     // Search limit check
     if (!hasSubscription && isSearchLimitReached(user?.uid)) {
-      console.log('🚫 Search limit reached');
+      //console.log('🚫 Search limit reached');
       const paymentPromptMessage = {
         id: Date.now(),
         type: 'paymentPrompt',
@@ -250,7 +250,7 @@ export function useChat() {
       }
       
     } catch (error) {
-      console.error("❌ Error during search:", error);
+      //console.error("❌ Error during search:", error);
     }
     
   }, [myAction, toast]);
